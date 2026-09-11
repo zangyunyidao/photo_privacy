@@ -2,7 +2,7 @@
 
 | Format | Detect now | MVP inspection | MVP sanitize | Notes |
 |---|---:|---:|---:|---|
-| JPEG/JPG | Yes | Yes | Yes | Exif/TIFF, XMP, IPTC, comments, APP segments |
+| JPEG/JPG | Yes | Implemented | Implemented | Segment inventory, common Exif/TIFF fields, XMP/IPTC/comments, orientation retention, post-clean verification |
 | PNG/APNG | Yes | Yes | Yes | Chunks, textual data, eXIf, time; preserve animation |
 | WebP | Yes | Yes | Yes | RIFF, EXIF, XMP, ICC, alpha, animation flags |
 | GIF87a/89a | Yes | Basic | Stretch | Preserve animation and loop behavior |

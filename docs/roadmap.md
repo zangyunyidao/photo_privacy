@@ -14,7 +14,7 @@
 
 ## Milestone 2 — JPEG 完整闭环
 
-- [ ] 完成 Issue 2：JPEG/Exif 检查、清理与二次验证。
+- [x] 完成 Issue 2：JPEG/Exif 检查、清理与二次验证。
 - [ ] 完成 Issue 5 的 JPEG 网页流程。
 
 ## Milestone 3 — 多格式扩展

@@ -4,9 +4,12 @@ PhotoPrivacy 是一个以隐私保护为目标的图像元数据检查与清理�
 MoonBit 实现。项目计划通过 WebAssembly 在浏览器本地处理文件，用户选择的
 图像不会上传到服务器。
 
-当前原型已经能够依据文件签名识别 JPEG、PNG、WebP、GIF、BMP、TIFF、
-HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。比赛阶段的最小可交付版本
-将重点实现 JPEG、PNG 和 WebP 的安全元数据检查与清理。
+当前版本已经能够依据文件签名识别 JPEG、PNG、WebP、GIF、BMP、TIFF、
+HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 已支持段结构检查、
+Exif/TIFF 常用字段解析，以及 Exif、XMP、IPTC、注释和尾随数据清理；清理过程
+不会解码或重新压缩 JPEG 像素数据，并会再次解析输出结果进行验证。
+
+比赛阶段接下来将扩展 PNG、WebP，并把这些能力接入本地 WebAssembly 页面。
 
 ## 本地运行
 
