@@ -1,0 +1,5 @@
+import {
+  "zangyunyidao/photo_privacy" @lib,
+}
+
+pkgtype(kind: "executable")
