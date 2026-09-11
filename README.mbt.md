@@ -1,31 +1,30 @@
 # PhotoPrivacy
 
-PhotoPrivacy is a privacy-first image metadata inspector and sanitizer written
-primarily in MoonBit. The planned browser application processes files locally
-with WebAssembly: selected images are not uploaded to a server.
+PhotoPrivacy 是一个以隐私保护为目标的图像元数据检查与清理工具，主要使用
+MoonBit 实现。项目计划通过 WebAssembly 在浏览器本地处理文件，用户选择的
+图像不会上传到服务器。
 
-## Why
+## 项目作用
 
-Photos and exported images may contain location, capture time, device, software,
-comments, and other metadata. PhotoPrivacy will make that information visible,
-explain its privacy impact, and create a cleaned copy while preserving the image
-for ordinary viewing.
+照片和导出的图像除了可见画面之外，还可能包含拍摄位置、拍摄时间、设备型号、
+编辑软件、文字注释等元数据。PhotoPrivacy 将展示这些信息及其潜在隐私影响，
+并在保留图像正常观看能力的前提下生成清理后的副本。
 
-## Current status
+## 当前状态
 
-This repository is the pre-registration prototype. It detects actual container
-formats from file signatures rather than trusting filenames or MIME labels:
+当前仓库是项目的报名基线版本。格式检测依据文件实际签名，而不是文件名或
+浏览器提供的 MIME 类型：
 
 - JPEG/JPG
-- PNG/APNG container
+- PNG/APNG 容器
 - WebP
 - GIF87a/GIF89a
 - BMP
-- TIFF (little- and big-endian)
-- HEIF/HEIC-family ISO-BMFF brands
+- TIFF（大端与小端）
+- HEIF/HEIC 系列 ISO-BMFF 品牌
 - AVIF
 
-Run the demonstration and tests from the repository root:
+在项目根目录运行演示与测试：
 
 ```text
 moon run cmd/main
@@ -33,40 +32,37 @@ moon check
 moon test
 ```
 
-## Planned deliverable
+## 计划交付内容
 
-The competition MVP targets full inspection and metadata sanitization for JPEG,
-PNG, and WebP. GIF and BMP are stretch goals. TIFF, HEIF/HEIC, AVIF, and SVG
-will initially be detected and reported as unsupported for sanitization unless a
-safe implementation is completed and tested.
+比赛阶段的最小可交付版本将重点实现 JPEG、PNG 和 WebP 的完整检查与元数据
+清理。GIF 和 BMP 是扩展目标。TIFF、HEIF/HEIC、AVIF 和 SVG 在第一版中只
+负责识别并明确提示暂不支持清理，除非后续实现经过了充分测试。
 
-The browser UI will provide drag-and-drop and file selection, image preview,
-format and metadata reports, privacy-risk explanations, sanitization, post-clean
-verification, and download of the cleaned image. The UI is a thin host around a
-MoonBit/WebAssembly inspection and sanitization core.
+浏览器界面将提供拖放与手动选择、图像预览、格式与元数据报告、隐私风险说明、
+清理后复检以及干净副本下载。界面只负责浏览器交互，解析、隐私分类、清理策略
+与结果验证由 MoonBit/WebAssembly 核心完成。
 
-## Privacy promise and limits
+## 隐私承诺与边界
 
-"Clean" means that the tool removes non-rendering metadata supported by its
-documented format profile and then scans the output again. An image must retain
-structural information such as dimensions, pixel format, compression data,
-transparency, and animation data in order to remain viewable. PhotoPrivacy cannot
-remove information visible in the pixels, watermarks, unknown steganography, or
-facts that can be inferred from the depicted scene.
+“清理”表示工具按照已公开的格式支持范围，移除非显示必需且能够识别的元数据，
+并再次扫描输出文件进行验证。图像要保持可观看，必须保留尺寸、像素格式、压缩
+数据、透明度和动画等必要结构。PhotoPrivacy 无法删除画面中可见的人脸、文字、
+水印，也不能保证消除未知隐写信息或从画面内容中推断出的事实。
 
-The planned application performs processing locally. It will not require an
-account, upload image bytes, or call a remote image-processing API.
+计划中的应用将在本地完成处理，不要求注册账号，不上传图像字节，也不调用远程
+图像处理服务。
 
-## Project documents
+## 项目文档
 
-- [One-page proposal](docs/proposal.md)
-- [Architecture](docs/architecture.md)
-- [Supported formats](docs/supported-formats.md)
-- [Privacy model](docs/privacy-model.md)
-- [Development roadmap](docs/roadmap.md)
+- [项目申报书](docs/申报书.md)
+- [一页项目方案](docs/proposal.md)
+- [架构设计](docs/architecture.md)
+- [支持格式](docs/supported-formats.md)
+- [隐私模型](docs/privacy-model.md)
+- [开发路线图](docs/roadmap.md)
+- [GitHub Issues 设计](docs/issues.md)
 
-## Open source
+## 开源说明
 
-Licensed under Apache-2.0. Specifications and third-party references used during
-implementation will be recorded with their URLs and licenses; no third-party
-source code will be copied without compatible attribution.
+项目采用 Apache-2.0 许可证。开发中使用的技术规范和第三方参考资料将记录来源
+链接与许可证；不会复制来源不明或许可证不兼容的第三方代码。

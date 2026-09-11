@@ -6,7 +6,7 @@
 - [x] Define scope, privacy claims, architecture, and format matrix.
 - [x] Implement signature-based multi-format detection.
 - [x] Add tests for normal and malformed inputs.
-- [ ] Publish the baseline to a public GitHub repository and submit registration.
+- [x] Publish the baseline to a public GitHub repository and submit registration.
 
 ## Milestone 1 — safe container model
 
