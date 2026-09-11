@@ -9,8 +9,40 @@ import {
 pub fn detect_format(Bytes) -> ImageFormat
 
 // Errors
+pub(all) suberror BinaryReadError {
+  InvalidPosition(Int, Int)
+  InvalidLength(Int)
+  UnexpectedEnd(Int, Int, Int)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
+pub struct BinaryReader {
+  // private fields
+}
+pub fn BinaryReader::length(Self) -> Int
+pub fn BinaryReader::new(Bytes) -> Self
+pub fn BinaryReader::position(Self) -> Int
+pub fn BinaryReader::read_u16_be(Self) -> Result[UInt, BinaryReadError]
+pub fn BinaryReader::read_u16_le(Self) -> Result[UInt, BinaryReadError]
+pub fn BinaryReader::read_u32_be(Self) -> Result[UInt, BinaryReadError]
+pub fn BinaryReader::read_u32_le(Self) -> Result[UInt, BinaryReadError]
+pub fn BinaryReader::read_u8(Self) -> Result[Byte, BinaryReadError]
+pub fn BinaryReader::read_view(Self, Int) -> Result[BytesView, BinaryReadError]
+pub fn BinaryReader::remaining(Self) -> Int
+pub fn BinaryReader::seek(Self, Int) -> Result[Unit, BinaryReadError]
+pub fn BinaryReader::skip(Self, Int) -> Result[Unit, BinaryReadError]
+
+pub(all) enum DiagnosticSeverity {
+  Info
+  Warning
+  Error
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ImageDimensions {
+  width : Int
+  height : Int
+} derive(Eq, @debug.Debug)
+
 pub(all) enum ImageFormat {
   Jpeg
   Png
@@ -24,6 +56,59 @@ pub(all) enum ImageFormat {
 } derive(Eq, @debug.Debug)
 pub fn ImageFormat::display_name(Self) -> String
 pub fn ImageFormat::mime_type(Self) -> String
+
+pub struct ImageInfo {
+  // private fields
+}
+pub fn ImageInfo::diagnostics(Self) -> Array[ParseDiagnostic]
+pub fn ImageInfo::dimensions(Self) -> ImageDimensions?
+pub fn ImageInfo::file_size(Self) -> Int
+pub fn ImageInfo::format(Self) -> ImageFormat
+pub fn ImageInfo::has_alpha(Self) -> Bool?
+pub fn ImageInfo::is_animated(Self) -> Bool?
+pub fn ImageInfo::metadata(Self) -> Array[MetadataItem]
+pub fn ImageInfo::new(ImageFormat, Int, ImageDimensions?, Bool?, Bool?, Array[MetadataItem], Array[ParseDiagnostic]) -> Self
+
+pub(all) enum MetadataCategory {
+  Location
+  CaptureTime
+  Device
+  Software
+  Author
+  Description
+  Orientation
+  ColorProfile
+  Other
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MetadataDisposition {
+  DisplayRequired
+  Removable
+  UnknownUse
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MetadataItem {
+  source : String
+  name : String
+  value : String
+  category : MetadataCategory
+  risk : PrivacyRisk
+  disposition : MetadataDisposition
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ParseDiagnostic {
+  code : String
+  message : String
+  offset : Int?
+  severity : DiagnosticSeverity
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PrivacyRisk {
+  NoRisk
+  Low
+  Medium
+  High
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

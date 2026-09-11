@@ -8,37 +8,24 @@
 - [x] Add tests for normal and malformed inputs.
 - [x] Publish the baseline to a public GitHub repository and submit registration.
 
-## Milestone 1 — safe container model
+## Milestone 1 — 通用基础设施
 
-- Bounds-checked binary reader and structured diagnostics.
-- Normalized `ImageInfo`, `MetadataItem`, and `PrivacyRisk` types.
-- JPEG segment, PNG chunk, and WebP RIFF inventories.
+- [x] 完成 Issue 1：安全二进制读取器与统一图像信息模型。
 
-## Milestone 2 — metadata inspection
+## Milestone 2 — JPEG 完整闭环
 
-- Shared Exif/TIFF IFD reader with both byte orders.
-- JPEG Exif/XMP/IPTC/comment extraction.
-- PNG textual/eXIf/time extraction.
-- WebP EXIF/XMP/ICC extraction and animation reporting.
+- [ ] 完成 Issue 2：JPEG/Exif 检查、清理与二次验证。
+- [ ] 完成 Issue 5 的 JPEG 网页流程。
 
-## Milestone 3 — sanitization and proof
+## Milestone 3 — 多格式扩展
 
-- Format-specific lossless structural sanitizers.
-- Explicit retention/removal report.
-- Post-clean re-scan and structural validity checks.
-- Tests for truncation, malicious lengths, unknown fields, and round trips.
+- [ ] 完成 Issue 3：PNG 检查与清理。
+- [ ] 完成 Issue 4：WebP 检查与清理；时间不足时可作为扩展目标。
 
-## Milestone 4 — usable delivery
+## Milestone 4 — 可用交付与验收
 
-- Native CLI for inspection, cleaning, and verification.
-- Static WebAssembly page with drag-and-drop, preview, report, and download.
-- GitHub Actions checks and reproducible demo instructions.
+- [ ] 完成 Issue 5：WebAssembly 界面、多格式接入、文档与验收。
 
-## Suggested GitHub issues
+## GitHub Issues
 
-1. Implement bounds-checked endian-aware binary reader.
-2. Add JPEG segment inventory and malformed-length diagnostics.
-3. Add PNG chunk inventory and CRC validation.
-4. Add WebP RIFF chunk inventory and feature flags.
-5. Define normalized metadata and privacy-risk model.
-6. Build browser drag-and-drop and Wasm bridge.
+具体内容与验收标准见 [issues.md](issues.md)。
