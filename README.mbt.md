@@ -41,6 +41,16 @@ moon check
 moon test
 ```
 
+构建并启动浏览器 MVP：
+
+```text
+.\scripts\build-web.ps1
+python -m http.server 8000 --directory web\dist
+```
+
+打开 `http://127.0.0.1:8000/` 后，可以拖放或选择 JPEG，查看 MoonBit/Wasm
+解析出的元数据及风险，并生成经过二次检查的干净副本。
+
 ## 计划交付内容
 
 比赛阶段的最小可交付版本将重点实现 JPEG、PNG 和 WebP 的完整检查与元数据

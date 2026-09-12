@@ -25,9 +25,9 @@ Browser File / CLI Bytes
 - `cmd/photo_privacy`: file-oriented native command-line host.
 - `wasm/api`: byte-oriented exports for the browser host.
 
-HTML, CSS, and a small JavaScript adapter will provide browser file APIs and DOM
-rendering. Parsing, metadata classification, sanitization decisions, and output
-verification remain in MoonBit.
+HTML、CSS 与少量 JavaScript 适配器负责浏览器文件 API、预览、DOM 渲染和下载。
+浏览器通过整数 ABI 将图像字节分块传给 MoonBit 编译出的 WebAssembly；解析、
+元数据分类、清理策略和输出复检仍由 MoonBit 核心完成。
 
 ## Security boundaries
 

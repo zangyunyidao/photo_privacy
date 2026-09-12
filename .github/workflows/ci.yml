@@ -22,5 +22,10 @@ jobs:
       - name: Check and test
         run: |
           moon version --all
-          moon check
-          moon test
+          moon check --target wasm
+          moon test --target wasm
+
+      - name: Build and test browser bridge
+        run: |
+          bash scripts/build-web.sh
+          node --test web/tests/bridge.test.mjs
