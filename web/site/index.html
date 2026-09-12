@@ -10,7 +10,7 @@
     />
     <meta
       name="description"
-      content="PhotoPrivacy：在浏览器本地检查并清理 JPEG 与 PNG 图像元数据。"
+      content="PhotoPrivacy：在浏览器本地检查并清理 JPEG、PNG 与 WebP 图像元数据。"
     />
     <title>PhotoPrivacy · 本地图像隐私清理</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -32,7 +32,7 @@
         <p class="eyebrow">MOONBIT · WEBASSEMBLY</p>
         <h1 id="page-title">分享图片前，先看看它还携带了什么。</h1>
         <p class="intro-copy">
-          将 JPEG 或 PNG 拖入页面，PhotoPrivacy 会在你的浏览器中检查位置、
+          将 JPEG、PNG 或 WebP 拖入页面，PhotoPrivacy 会在你的浏览器中检查位置、
           拍摄时间、设备和文本等信息，并生成清理后的副本。
         </p>
       </section>
@@ -45,14 +45,14 @@
           role="button"
           aria-describedby="drop-help"
         >
-          <input id="file-input" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden />
+          <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden />
           <div class="drop-icon" aria-hidden="true">
             <svg viewBox="0 0 48 48" role="img">
               <path d="M24 31V10m0 0-8 8m8-8 8 8M9 30v6a4 4 0 0 0 4 4h22a4 4 0 0 0 4-4v-6" />
             </svg>
           </div>
           <h2>拖入图像，或点击选择</h2>
-          <p id="drop-help">当前清理功能支持 JPEG 与 PNG，单个文件最大 50 MiB</p>
+          <p id="drop-help">当前清理功能支持 JPEG、PNG 与 WebP，单个文件最大 50 MiB</p>
           <button id="choose-button" class="button button-primary" type="button">
             选择本地图像
           </button>
@@ -101,6 +101,9 @@
                 <div id="fact-color-row"><dt>PNG 色彩类型</dt><dd id="fact-color-type">—</dd></div>
                 <div id="fact-alpha-row"><dt>透明通道</dt><dd id="fact-alpha">—</dd></div>
                 <div id="fact-animation-row"><dt>动画</dt><dd id="fact-animation">—</dd></div>
+                <div id="fact-encoding-row"><dt>WebP 编码</dt><dd id="fact-encoding">—</dd></div>
+                <div id="fact-frame-row"><dt>动画帧数</dt><dd id="fact-frame-count">—</dd></div>
+                <div id="fact-loop-row"><dt>循环次数</dt><dd id="fact-loop-count">—</dd></div>
                 <div><dt>处理位置</dt><dd>当前浏览器</dd></div>
               </dl>
             </article>
@@ -173,7 +176,7 @@
         </div>
         <div class="note-grid">
           <p><strong>不会上传</strong><span>没有账号、后端或远程图像处理 API。</span></p>
-          <p><strong>不会重压缩</strong><span>JPEG 扫描数据与 PNG IDAT 数据保持原样。</span></p>
+          <p><strong>不会重压缩</strong><span>JPEG 扫描数据、PNG IDAT 与 WebP 位流保持原样。</span></p>
           <p><strong>不能隐藏画面</strong><span>人脸、文字、水印等可见内容不会被删除。</span></p>
         </div>
       </section>

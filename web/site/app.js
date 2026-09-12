@@ -21,10 +21,16 @@ const elements = {
   factColorType: document.querySelector("#fact-color-type"),
   factAlpha: document.querySelector("#fact-alpha"),
   factAnimation: document.querySelector("#fact-animation"),
+  factEncoding: document.querySelector("#fact-encoding"),
+  factFrameCount: document.querySelector("#fact-frame-count"),
+  factLoopCount: document.querySelector("#fact-loop-count"),
   factBitDepthRow: document.querySelector("#fact-bit-depth-row"),
   factColorRow: document.querySelector("#fact-color-row"),
   factAlphaRow: document.querySelector("#fact-alpha-row"),
   factAnimationRow: document.querySelector("#fact-animation-row"),
+  factEncodingRow: document.querySelector("#fact-encoding-row"),
+  factFrameRow: document.querySelector("#fact-frame-row"),
+  factLoopRow: document.querySelector("#fact-loop-row"),
   metadataCount: document.querySelector("#metadata-count"),
   metadataBody: document.querySelector("#metadata-body"),
   metadataEmpty: document.querySelector("#metadata-empty"),
@@ -214,19 +220,29 @@ function renderInspection(report) {
       ? "未找到"
       : `${report.width} × ${report.height} px`;
   elements.factUnitLabel.textContent = report.unitLabel ?? "结构单元";
-  elements.factSegments.textContent = `${report.unitCount ?? report.segmentCount} ${
-    report.format === "PNG" ? "块" : "段"
-  }`;
+  const unit = report.format === "JPEG" ? "段" : "块";
+  elements.factSegments.textContent = `${report.unitCount ?? report.segmentCount} ${unit}`;
   elements.factOrientation.textContent = orientationLabel(report.orientation);
   const isPng = report.format === "PNG";
+  const isWebp = report.format === "WebP";
   elements.factBitDepthRow.hidden = !isPng;
   elements.factColorRow.hidden = !isPng;
-  elements.factAlphaRow.hidden = !isPng;
-  elements.factAnimationRow.hidden = !isPng;
+  elements.factAlphaRow.hidden = !(isPng || isWebp);
+  elements.factAnimationRow.hidden = !(isPng || isWebp);
+  elements.factEncodingRow.hidden = !isWebp;
+  elements.factFrameRow.hidden = !(isWebp && report.isAnimated);
+  elements.factLoopRow.hidden = !(isWebp && report.isAnimated);
   elements.factBitDepth.textContent = isPng ? `${report.bitDepth} bit` : "—";
   elements.factColorType.textContent = isPng ? pngColorTypeLabel(report.colorType) : "—";
-  elements.factAlpha.textContent = isPng ? (report.hasAlpha ? "有" : "无") : "—";
-  elements.factAnimation.textContent = isPng ? (report.isAnimated ? "APNG" : "静态") : "—";
+  elements.factAlpha.textContent = isPng || isWebp ? (report.hasAlpha ? "有" : "无") : "—";
+  elements.factAnimation.textContent = isPng || isWebp
+    ? (report.isAnimated ? (isPng ? "APNG" : "动画 WebP") : "静态")
+    : "—";
+  elements.factEncoding.textContent = isWebp ? report.encoding : "—";
+  elements.factFrameCount.textContent = isWebp ? `${report.frameCount} 帧` : "—";
+  elements.factLoopCount.textContent = isWebp
+    ? (report.loopCount === 0 ? "无限循环" : `${report.loopCount} 次`)
+    : "—";
   renderMetadata(report.metadata ?? []);
   const diagnostics = report.diagnostics ?? [];
   if (diagnostics.length > 0) {
@@ -268,7 +284,8 @@ async function inspectFile(file) {
 function cleanedFileName(name) {
   const dot = name.lastIndexOf(".");
   const stem = dot > 0 ? name.slice(0, dot) : name;
-  return `${stem}.clean.${state.format === "PNG" ? "png" : "jpg"}`;
+  const extension = { JPEG: "jpg", PNG: "png", WebP: "webp" }[state.format] ?? "bin";
+  return `${stem}.clean.${extension}`;
 }
 
 function removalLabel(name) {
@@ -280,6 +297,11 @@ function removalLabel(name) {
   if (name === "PNG Exif (eXIf)") return "PNG Exif（eXIf）";
   if (name === "PNG modification time (tIME)") return "PNG 修改时间（tIME）";
   if (name === "PNG physical dimensions (pHYs)") return "PNG 物理尺寸（pHYs）";
+  if (name === "WebP Exif (EXIF)") return "WebP Exif（EXIF）";
+  if (name === "WebP XMP (XMP )") return "WebP XMP（XMP）";
+  if (name === "Data after RIFF") return "WebP RIFF 范围后的尾随数据";
+  if (name.startsWith("WebP unknown chunk")) return name.replace("WebP unknown chunk", "WebP 未知块");
+  if (name.startsWith("ANMF unknown chunk")) return name.replace("ANMF unknown chunk", "动画帧内未知块");
   return name;
 }
 
@@ -303,7 +325,7 @@ function renderSanitizeResult(report) {
     }
     if (report.removedBytes > 0 && (report.removed ?? []).length === 0) {
       const item = document.createElement("li");
-      item.textContent = "JPEG 结束标记后的尾随数据";
+      item.textContent = "发现并移除了容器结束位置后的尾随数据";
       elements.removedList.append(item);
     }
   }
@@ -322,11 +344,12 @@ async function sanitizeCurrentFile() {
       throw new Error(report.message ?? "清理后的文件未通过复检，已停止下载");
     }
     if (state.downloadUrl) URL.revokeObjectURL(state.downloadUrl);
-    state.downloadUrl = URL.createObjectURL(
-      new Blob([state.output], {
-        type: state.format === "PNG" ? "image/png" : "image/jpeg",
-      }),
-    );
+    const mimeType = {
+      JPEG: "image/jpeg",
+      PNG: "image/png",
+      WebP: "image/webp",
+    }[state.format] ?? "application/octet-stream";
+    state.downloadUrl = URL.createObjectURL(new Blob([state.output], { type: mimeType }));
     renderSanitizeResult(report);
   } catch (error) {
     showError(error.message);
