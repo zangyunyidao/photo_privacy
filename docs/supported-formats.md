@@ -3,7 +3,7 @@
 | Format | Signature detection | Inspection | Sanitization | Notes |
 |---|---:|---:|---:|---|
 | JPEG/JPG | Yes | Implemented | Implemented | Segment inventory, common Exif/TIFF fields, XMP/IPTC/comments, orientation retention, post-clean verification |
-| PNG/APNG | Yes | Planned (Issue #3) | Planned (Issue #3) | Chunks, textual data, eXIf, time; preserve transparency, color and animation |
+| PNG/APNG | Yes | Implemented | Implemented | CRC-validated chunks, text/eXIf/time/physical data cleaning; preserves transparency, color and animation; browser manual verification pending |
 | WebP | Yes | Planned (Issue #4) | Planned (Issue #4) | RIFF, EXIF, XMP, ICC, alpha and animation flags |
 | GIF87a/89a | Yes | Detection only | No | Cleaning is outside the current scope |
 | BMP | Yes | Detection only | No | Cleaning is outside the current scope |

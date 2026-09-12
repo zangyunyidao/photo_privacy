@@ -22,13 +22,14 @@
 
 ## Milestone 3 — 多格式扩展
 
-- [ ] 完成 Issue 3：PNG 检查与清理。
+- [x] 完成 Issue 3 的 PNG 检查、清理、复检和网页接入。
+- [ ] 完成普通、透明和动画 PNG 的浏览器人工验收。
 - [ ] 完成 Issue 4：WebP 检查与清理；时间不足时可作为扩展目标。
 
 ## Milestone 4 — 可用交付与验收
 
 - [x] 完成 Issue 5 的 JPEG WebAssembly MVP、文档与线上演示。
-- [ ] 将 Issue 3 的 PNG 检查与清理接入网页。
+- [x] 将 Issue 3 的 PNG 检查与清理接入网页。
 - [ ] 将 Issue 4 的 WebP 检查与清理接入网页。
 - [ ] 完成多格式真实文件验收、全新克隆复现和最终文档。
 

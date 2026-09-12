@@ -7,12 +7,12 @@ MoonBit 实现。应用通过 WebAssembly 在浏览器本地处理文件，用�
 **在线演示：** <https://zangyunyidao.github.io/photo_privacy/>
 
 当前版本已经能够依据文件签名识别 JPEG、PNG、WebP、GIF、BMP、TIFF、
-HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 已支持段结构检查、
-Exif/TIFF 常用字段解析，以及 Exif、XMP、IPTC、注释和尾随数据清理；清理过程
-不会解码或重新压缩 JPEG 像素数据，并会再次解析输出结果进行验证。
+HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 与 PNG 已支持容器结构
+检查、常用 Exif/TIFF 字段解析、隐私元数据清理和清理后复检。清理过程不会解码
+或重新压缩像素数据；PNG 透明度、色彩信息及 APNG 动画结构会被保留。
 
-JPEG 浏览器闭环已经在真实手机照片上完成检查、清理、下载和重新上传验收。
-比赛阶段接下来将扩展 PNG、WebP，并把这些能力接入同一 WebAssembly 页面。
+JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已接入同一 WebAssembly
+页面并通过核心与桥接自动测试，等待普通、透明和动画 PNG 的浏览器人工验收。
 
 ## 本地运行
 
@@ -24,7 +24,7 @@ moon test
 
 ## 浏览器 MVP
 
-当前网页 MVP 使用 MoonBit 编译出的 WebAssembly 在浏览器本地完成 JPEG 检查与
+当前网页 MVP 使用 MoonBit 编译出的 WebAssembly 在浏览器本地完成 JPEG/PNG 检查与
 清理。浏览器只负责文件选择、预览和下载，不会把图像发送到服务器。
 
 也可以直接使用[在线演示](https://zangyunyidao.github.io/photo_privacy/)。
@@ -39,13 +39,13 @@ python -m http.server 8000 --directory web\dist
 然后访问 <http://127.0.0.1:8000/>。页面目前支持：
 
 - 拖放或手动选择本地图像；
-- 显示 JPEG 尺寸、方向、元数据及隐私风险；
-- 清除 Exif、XMP、IPTC、注释和尾随数据；
-- 保留 JPEG 压缩扫描数据和必要的显示方向；
+- 显示 JPEG/PNG 尺寸、结构、方向、透明度、动画状态、元数据及隐私风险；
+- 清除 Exif、文本、时间、物理尺寸和尾随数据等非显示必需信息；
+- 保留 JPEG 扫描数据、PNG IDAT、显示方向、透明度、色彩及 APNG 结构；
 - 对清理结果进行二次解析，并下载干净副本。
 
-核心能够依据文件签名识别 PNG、WebP 和其他列出的格式；网页当前会明确提示
-尚未支持这些格式的检查与清理，不会生成可能损坏的输出。
+核心能够依据文件签名识别 WebP 和其他列出的格式；网页会明确提示尚未支持的
+格式，不会生成可能损坏的输出。
 
 构建后可以额外运行 Wasm 桥接测试：
 
