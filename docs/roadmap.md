@@ -24,8 +24,8 @@
 
 - [x] 完成 Issue 3 的 PNG 检查、清理、复检和网页接入。
 - [x] 完成普通、透明和动画 PNG 的浏览器人工验收。
-- [ ] 推送并合并 `feat/png`，确认 GitHub Pages 中的 PNG 闭环。
-- [ ] 完成 Issue 4：WebP 检查与清理，并接入同一网页。
+- [x] 推送并合并 `feat/png`，确认 GitHub Pages 中的 PNG 闭环。
+- [ ] 完成 Issue 4：WebP 检查与清理，并接入同一网页（开发中）。
 
 ## Milestone 4 — 可用交付与验收
 

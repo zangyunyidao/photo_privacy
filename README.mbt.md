@@ -58,7 +58,7 @@ python -m http.server 8000 --directory web\dist
 
 线上 GitHub Pages 已部署；真实手机 JPEG 已完成检查、清理、下载、正常显示及
 重新上传复检。PNG 已完成代码、自动测试以及普通、透明和动画 PNG 的本地浏览器
-人工验收，等待 `feat/png` 合并后部署；WebP 目前只完成签名识别。
+人工验收并合并部署；WebP 正在 `feat/webp` 分支开发。
 
 ## 后续交付内容
 
@@ -90,6 +90,7 @@ python -m http.server 8000 --directory web\dist
 - [开发路线图](docs/roadmap.md)
 - [GitHub Issues 设计](docs/issues.md)
 - [PNG 实施计划](docs/png-implementation-plan.md)
+- [WebP 实施计划](docs/webp-implementation-plan.md)
 
 ## 开源说明
 

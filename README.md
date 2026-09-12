@@ -13,7 +13,7 @@ HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 与 PNG �
 
 JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已接入同一 WebAssembly
 页面，并通过核心测试、Wasm 桥接测试以及普通、透明和动画 PNG 的本地浏览器
-人工验收。PNG 更新目前位于 `feat/png` 分支，等待合并并部署到在线演示。
+人工验收，现已合并并部署到在线演示。下一阶段在 `feat/webp` 分支实现 WebP。
 
 ## 本地运行
 
@@ -79,6 +79,7 @@ node --test web/tests/bridge.test.mjs
 - [开发路线图](docs/roadmap.md)
 - [GitHub Issues 设计](docs/issues.md)
 - [PNG 实施计划](docs/png-implementation-plan.md)
+- [WebP 实施计划](docs/webp-implementation-plan.md)
 
 ## 开源许可
 
