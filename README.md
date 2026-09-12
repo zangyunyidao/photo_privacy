@@ -12,7 +12,8 @@ HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 与 PNG �
 或重新压缩像素数据；PNG 透明度、色彩信息及 APNG 动画结构会被保留。
 
 JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已接入同一 WebAssembly
-页面并通过核心与桥接自动测试，等待普通、透明和动画 PNG 的浏览器人工验收。
+页面，并通过核心测试、Wasm 桥接测试以及普通、透明和动画 PNG 的本地浏览器
+人工验收。PNG 更新目前位于 `feat/png` 分支，等待合并并部署到在线演示。
 
 ## 本地运行
 
@@ -39,8 +40,7 @@ moon test
 3. 等待服务器就绪后用系统默认浏览器打开页面。
 
 任务运行期间服务器会保持开启。使用 `Ctrl+C` 或点击 VS Code 终端中的“终止任务”
-即可停止服务器。也可以从“终端 → 运行任务”选择
-`PhotoPrivacy: 运行全部测试` 完成核心和 Wasm 桥接测试。
+即可停止服务器。
 
 这个任务只是开发入口，不会取代 MoonBit 代码接口。其他 MoonBit 包仍可直接调用
 `detect_format`、`inspect_jpeg`、`sanitize_jpeg`、`inspect_png` 和 `sanitize_png`。
