@@ -4,6 +4,11 @@ import test from "node:test";
 import { deflateSync } from "node:zlib";
 
 const artifact = new URL("../dist/photo_privacy.wasm", import.meta.url);
+const realWebpSamples = {
+  lossy: "UklGRjwAAABXRUJQVlA4IDAAAACwAQCdASoCAAEAAUAmJaACdAEO/gLsAM4/Whd1iCP/9NI//ppH/9NI+YsrSaSSAAA=",
+  losslessAlpha: "UklGRiAAAABXRUJQVlA4TBMAAAAvAQAAEA8w//sfD/oPBxWI6H8AAA==",
+  animated: "UklGRoQAAABXRUJQVlA4WAoAAAASAAAAAQAAAQAAQU5JTQYAAAAAAAAAAABBTk1GKAAAAAAAAAAAAAEAAAEAAGQAAAJWUDhMDwAAAC8BQAAABxD9j/4HIqL/AQBBTk1GKAAAAAAAAAAAAAEAAAEAAGQAAAJWUDhMDwAAAC8BQAAQBxDR/wIGIqL/AQA=",
+};
 
 function sampleJpeg() {
   return Buffer.concat([
@@ -62,6 +67,64 @@ function samplePng() {
     pngChunk("IEND", Buffer.alloc(0)),
     Buffer.from("trailing", "ascii"),
   ]);
+}
+
+function riffChunk(name, payload) {
+  const header = Buffer.alloc(8);
+  header.write(name, 0, 4, "ascii");
+  header.writeUInt32LE(payload.length, 4);
+  return Buffer.concat([
+    header,
+    payload,
+    payload.length % 2 === 1 ? Buffer.from([0]) : Buffer.alloc(0),
+  ]);
+}
+
+function sampleWebp() {
+  const simpleLossy = Buffer.from(realWebpSamples.lossy, "base64");
+  const vp8Length = simpleLossy.readUInt32LE(16);
+  const vp8x = Buffer.from([
+    0x0c, 0, 0, 0,
+    1, 0, 0,
+    0, 0, 0,
+  ]);
+  const vp8 = simpleLossy.subarray(20, 20 + vp8Length);
+  const exif = Buffer.concat([
+    Buffer.from([0x49, 0x49, 0x2a, 0, 8, 0, 0, 0]),
+    Buffer.from([2, 0]),
+    Buffer.from([0x12, 0x01, 3, 0, 1, 0, 0, 0, 6, 0, 0, 0]),
+    Buffer.from([0x0f, 0x01, 2, 0, 6, 0, 0, 0, 0x26, 0, 0, 0]),
+    Buffer.from([0, 0, 0, 0]),
+    Buffer.from("Canon\0", "latin1"),
+  ]);
+  const chunks = Buffer.concat([
+    riffChunk("VP8X", vp8x),
+    riffChunk("VP8 ", vp8),
+    riffChunk("EXIF", exif),
+    riffChunk("XMP ", Buffer.from("<xmp>private</xmp>")),
+    riffChunk("META", Buffer.from("private application data")),
+  ]);
+  const header = Buffer.alloc(12);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(chunks.length + 4, 4);
+  header.write("WEBP", 8, "ascii");
+  return Buffer.concat([header, chunks, Buffer.from("trailing")]);
+}
+
+function sampleRiffInfoWebp() {
+  const simple = Buffer.from(realWebpSamples.lossy, "base64");
+  const chunks = Buffer.concat([
+    simple.subarray(12),
+    riffChunk("IART", Buffer.from("test\0\0", "latin1")),
+    riffChunk("ICOP", Buffer.from("2010\0\0", "latin1")),
+    riffChunk("INAM", Buffer.from("webp-03.webp\0\0", "latin1")),
+    riffChunk("ICMT", Buffer.from("test vector\0", "latin1")),
+  ]);
+  const header = Buffer.alloc(12);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(chunks.length + 4, 4);
+  header.write("WEBP", 8, "ascii");
+  return Buffer.concat([header, chunks]);
 }
 
 async function createBridge(input) {
@@ -154,6 +217,82 @@ test("Wasm bridge sanitizes and verifies PNG", async () => {
   const rescan = await createBridge(bridge.state.output);
   assert.equal(rescan.exports.photo_privacy_inspect(), 0);
   assert.equal(resultJson(rescan.state).metadata.length, 0);
+});
+
+test("Wasm bridge inspects WebP metadata and image properties", async () => {
+  const bridge = await createBridge(sampleWebp());
+  assert.equal(bridge.exports.photo_privacy_inspect(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.ok, true);
+  assert.equal(report.format, "WebP");
+  assert.equal(report.width, 2);
+  assert.equal(report.height, 1);
+  assert.equal(report.encoding, "扩展 VP8X");
+  assert.equal(report.orientation, 6);
+  assert.equal(report.metadata.some((item) => item.name === "Camera maker"), true);
+  assert.equal(report.metadata.some((item) => item.name === "XMP"), true);
+});
+
+test("Wasm bridge sanitizes and verifies WebP", async () => {
+  const bridge = await createBridge(sampleWebp());
+  assert.equal(bridge.exports.photo_privacy_sanitize(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.ok, true);
+  assert.equal(report.format, "WebP");
+  assert.equal(report.verified, true);
+  assert.equal(report.removed.some((item) => item.name === "WebP XMP (XMP )"), true);
+  assert.equal(report.removed.some((item) => item.name === "Data after RIFF"), true);
+  assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("Canon")), false);
+  assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("private")), false);
+  const rescan = await createBridge(bridge.state.output);
+  assert.equal(rescan.exports.photo_privacy_inspect(), 0);
+  const cleanReport = resultJson(rescan.state);
+  assert.equal(cleanReport.orientation, 6);
+  assert.equal(cleanReport.metadata.some((item) => item.name === "XMP"), false);
+});
+
+test("Wasm bridge accepts real lossy, transparent lossless, and animated WebP", async () => {
+  const cases = [
+    ["lossy", realWebpSamples.lossy, false, false],
+    ["lossless alpha", realWebpSamples.losslessAlpha, true, false],
+    ["animated", realWebpSamples.animated, true, true],
+  ];
+  for (const [name, encoded, hasAlpha, isAnimated] of cases) {
+    const input = Buffer.from(encoded, "base64");
+    const bridge = await createBridge(input);
+    assert.equal(bridge.exports.photo_privacy_inspect(), 0, name);
+    const report = resultJson(bridge.state);
+    assert.equal(report.format, "WebP", name);
+    assert.equal(report.width, 2, name);
+    assert.equal(report.hasAlpha, hasAlpha, name);
+    assert.equal(report.isAnimated, isAnimated, name);
+    assert.equal(
+      report.diagnostics.some((item) => item.code === "webp.alpha-flag-mismatch"),
+      false,
+      name,
+    );
+    assert.equal(bridge.exports.photo_privacy_sanitize(), 0, name);
+    assert.equal(resultJson(bridge.state).verified, true, name);
+    assert.deepEqual(Buffer.from(bridge.state.output), input, name);
+  }
+});
+
+test("Wasm bridge cleans RIFF INFO metadata appended to a simple WebP", async () => {
+  const bridge = await createBridge(sampleRiffInfoWebp());
+  assert.equal(bridge.exports.photo_privacy_inspect(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.metadata.some((item) => item.name === "Artist"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Copyright"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Title"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Comment"), true);
+  assert.equal(bridge.exports.photo_privacy_sanitize(), 0);
+  const cleaned = resultJson(bridge.state);
+  assert.equal(cleaned.verified, true);
+  assert.equal(cleaned.removed.length, 4);
+  assert.deepEqual(
+    Buffer.from(bridge.state.output),
+    Buffer.from(realWebpSamples.lossy, "base64"),
+  );
 });
 
 test("Wasm bridge rejects unsupported input", async () => {

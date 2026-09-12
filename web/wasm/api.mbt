@@ -278,6 +278,66 @@ fn png_inspection_json(report : @lib.PngInspection) -> String {
 }
 
 ///|
+fn webp_inspection_json(report : @lib.WebpInspection) -> String {
+  let info = report.info()
+  let builder = StringBuilder()
+  builder.write_string("{\"ok\":true,\"format\":")
+  json_string(builder, info.format().display_name())
+  builder.write_string(",\"fileSize\":")
+  builder.write_string(info.file_size().to_string())
+  builder.write_string(",\"width\":")
+  match info.dimensions() {
+    Some(dimensions) => builder.write_string(dimensions.width.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"height\":")
+  match info.dimensions() {
+    Some(dimensions) => builder.write_string(dimensions.height.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"orientation\":")
+  match report.orientation() {
+    Some(value) => builder.write_string(value.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"unitCount\":")
+  builder.write_string(report.chunks().length().to_string())
+  builder.write_string(",\"unitLabel\":\"WebP 块数\"")
+  builder.write_string(",\"hasAlpha\":")
+  builder.write_string(
+    if info.has_alpha() == Some(true) {
+      "true"
+    } else {
+      "false"
+    },
+  )
+  builder.write_string(",\"isAnimated\":")
+  builder.write_string(
+    if info.is_animated() == Some(true) {
+      "true"
+    } else {
+      "false"
+    },
+  )
+  builder.write_string(",\"encoding\":")
+  json_string(builder, report.encoding().display_name())
+  builder.write_string(",\"frameCount\":")
+  builder.write_string(report.frame_count().to_string())
+  builder.write_string(",\"loopCount\":")
+  match report.loop_count() {
+    Some(value) => builder.write_string(value.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"bitDepth\":null,\"colorType\":null")
+  builder.write_string(",\"metadata\":")
+  append_metadata_json(builder, info.metadata())
+  builder.write_string(",\"diagnostics\":")
+  append_diagnostics_json(builder, info.diagnostics())
+  builder.write_char('}')
+  builder.to_string()
+}
+
+///|
 fn error_json(code : String, message : String) -> String {
   let builder = StringBuilder()
   builder.write_string("{\"ok\":false,\"code\":")
@@ -319,6 +379,21 @@ fn png_error_message(error : @lib.PngError) -> String {
 }
 
 ///|
+fn webp_error_message(error : @lib.WebpError) -> String {
+  match error {
+    @lib.NotWebp => "文件不是有效的 WebP"
+    @lib.UnexpectedEof(_, _, _) => "WebP 数据被截断"
+    @lib.InvalidRiffSize(_, _) => "WebP RIFF 文件长度无效"
+    @lib.InvalidChunkType(_) => "WebP 块类型无效"
+    @lib.InvalidChunkLength(_, _, _) => "WebP 块长度或图像头字段无效"
+    @lib.InvalidPadding(_, _) => "WebP 奇数长度块的填充字节无效"
+    @lib.InvalidChunkOrder(_, _) => "WebP 块顺序或结构无效"
+    @lib.MissingImageData => "WebP 缺少图像数据"
+    @lib.ChunkLimitExceeded(_) => "WebP 块数量超过安全限制"
+  }
+}
+
+///|
 #export_name("photo_privacy_inspect")
 pub fn inspect_loaded_file() -> Int {
   guard load_input() is Some(data) else {
@@ -350,10 +425,21 @@ pub fn inspect_loaded_file() -> Int {
           1
         }
       }
+    @lib.Webp =>
+      match @lib.inspect_webp(data) {
+        Ok(report) => {
+          send_json(webp_inspection_json(report))
+          0
+        }
+        Err(error) => {
+          send_json(error_json("invalid-webp", webp_error_message(error)))
+          1
+        }
+      }
     _ => {
       send_json(
         error_json(
-          "unsupported-format", "当前网页支持 JPEG 和 PNG 清理",
+          "unsupported-format", "当前网页支持 JPEG、PNG 和 WebP 清理",
         ),
       )
       2
@@ -373,10 +459,11 @@ pub fn sanitize_loaded_file() -> Int {
   match @lib.detect_format(data) {
     @lib.Jpeg => sanitize_loaded_jpeg(data)
     @lib.Png => sanitize_loaded_png(data)
+    @lib.Webp => sanitize_loaded_webp(data)
     _ => {
       send_json(
         error_json(
-          "unsupported-format", "当前网页支持 JPEG 和 PNG 清理",
+          "unsupported-format", "当前网页支持 JPEG、PNG 和 WebP 清理",
         ),
       )
       2
@@ -437,6 +524,48 @@ fn sanitize_loaded_png(data : Bytes) -> Int {
       send_output(result.output())
       let builder = StringBuilder()
       builder.write_string("{\"ok\":true,\"format\":\"PNG\",\"verified\":")
+      builder.write_string(if result.verified() { "true" } else { "false" })
+      builder.write_string(",\"outputSize\":")
+      builder.write_string(result.output().length().to_string())
+      builder.write_string(",\"removedBytes\":")
+      builder.write_string(result.removed_bytes().to_string())
+      builder.write_string(",\"removed\":[")
+      for index, item in result.removed() {
+        if index > 0 {
+          builder.write_char(',')
+        }
+        builder.write_string("{\"name\":")
+        json_string(builder, item.name)
+        builder.write_string(",\"offset\":")
+        builder.write_string(item.offset.to_string())
+        builder.write_string(",\"originalLength\":")
+        builder.write_string(item.original_length.to_string())
+        builder.write_string(",\"replacementLength\":")
+        builder.write_string(item.replacement_length.to_string())
+        builder.write_char('}')
+      }
+      builder.write_string("]}")
+      send_json(builder.to_string())
+      if result.verified() {
+        0
+      } else {
+        4
+      }
+    }
+  }
+}
+
+///|
+fn sanitize_loaded_webp(data : Bytes) -> Int {
+  match @lib.sanitize_webp(data) {
+    Err(error) => {
+      send_json(error_json("invalid-webp", webp_error_message(error)))
+      1
+    }
+    Ok(result) => {
+      send_output(result.output())
+      let builder = StringBuilder()
+      builder.write_string("{\"ok\":true,\"format\":\"WebP\",\"verified\":")
       builder.write_string(if result.verified() { "true" } else { "false" })
       builder.write_string(",\"outputSize\":")
       builder.write_string(result.output().length().to_string())
