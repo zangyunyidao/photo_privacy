@@ -15,8 +15,9 @@ categories, explains privacy risks, and creates a cleaned copy locally. The
 browser host uses WebAssembly so image bytes do not need to leave the
 device.
 
-The current public demo completes the JPEG workflow. PNG and WebP are the two
-remaining format milestones: <https://zangyunyidao.github.io/photo_privacy/>.
+The current public demo completes the inspect, sanitize, verify, and download
+workflow for JPEG, PNG, and WebP:
+<https://zangyunyidao.github.io/photo_privacy/>.
 
 ## Competition MVP
 
@@ -40,11 +41,11 @@ remaining format milestones: <https://zangyunyidao.github.io/photo_privacy/>.
 
 ## Verification
 
-Every parser will reject truncated or out-of-bounds structures without crashing.
-Tests will cover both byte orders where applicable, known metadata fixtures,
+Every parser rejects truncated or out-of-bounds structures without crashing.
+Tests cover both byte orders where applicable, known metadata fixtures,
 unknown metadata policy, and the invariant that sanitized output remains valid
-and contains none of the supported removable metadata. Results will be
-cross-checked with independent tools where licensing permits.
+and contains none of the supported removable metadata. The reproducible baseline
+currently passes 38 MoonBit tests and 9 WebAssembly bridge tests.
 
 ## Deliverables
 

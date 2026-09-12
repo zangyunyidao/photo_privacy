@@ -11,10 +11,10 @@ HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG、PNG 与
 检查、常用 Exif/TIFF 字段解析、隐私元数据清理和清理后复检。清理过程不会解码
 或重新压缩像素数据；透明度、色彩信息及动画结构会被保留。
 
-JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已接入同一 WebAssembly
-页面，并通过核心测试、Wasm 桥接测试以及普通、透明和动画 PNG 的本地浏览器
-人工验收，现已合并并部署到在线演示。WebP 已在 `feat/webp` 完成功能实现与
-自动测试，等待浏览器人工验收、推送和部署。
+JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已通过普通、透明和动画
+样例的浏览器验收；WebP 已通过带 RIFF 信息的真实有损样例验收，并用真实编码的
+有损、透明无损和动画样例完成 Wasm 回归测试。三个格式均已合并至 `main`，并部署
+到在线演示。
 
 ## 本地运行
 
@@ -70,6 +70,9 @@ python -m http.server 8000 --directory web\dist
 ```console
 node --test web/tests/bridge.test.mjs
 ```
+
+当前可复现基线为 MoonBit 测试 38/38 通过、Wasm 桥接测试 9/9 通过。CI 会在
+提交和 Pull Request 上重复执行这些检查。
 
 ## 项目文档
 
