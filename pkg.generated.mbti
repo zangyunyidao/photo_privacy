@@ -12,9 +12,13 @@ pub fn inspect_jpeg(Bytes) -> Result[JpegInspection, JpegError]
 
 pub fn inspect_png(Bytes) -> Result[PngInspection, PngError]
 
+pub fn inspect_webp(Bytes) -> Result[WebpInspection, WebpError]
+
 pub fn sanitize_jpeg(Bytes) -> Result[JpegSanitizeResult, JpegError]
 
 pub fn sanitize_png(Bytes) -> Result[PngSanitizeResult, PngError]
+
+pub fn sanitize_webp(Bytes) -> Result[WebpSanitizeResult, WebpError]
 
 // Errors
 pub(all) suberror BinaryReadError {
@@ -43,6 +47,18 @@ pub(all) suberror PngError {
   MissingIdat
   MissingIend
   UnknownCriticalChunk(String, Int)
+  ChunkLimitExceeded(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) suberror WebpError {
+  NotWebp
+  UnexpectedEof(Int, Int, Int)
+  InvalidRiffSize(UInt, Int)
+  InvalidChunkType(Int)
+  InvalidChunkLength(String, Int, Int)
+  InvalidPadding(Int, Int)
+  InvalidChunkOrder(String, Int)
+  MissingImageData
   ChunkLimitExceeded(Int)
 } derive(Eq, @debug.Debug)
 
@@ -226,6 +242,59 @@ pub(all) enum PrivacyRisk {
   Medium
   High
 } derive(Eq, @debug.Debug)
+
+pub(all) struct WebpChunk {
+  name : String
+  offset : Int
+  data_offset : Int
+  data_length : Int
+  padded_length : Int
+  end_offset : Int
+  known : Bool
+  role : WebpChunkRole
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WebpChunkRole {
+  WebpStructure
+  WebpImageData
+  WebpMetadata
+  WebpColorData
+  WebpAnimationData
+  UnknownWebpRole
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WebpEncoding {
+  Lossy
+  Lossless
+  Extended
+} derive(Eq, @debug.Debug)
+pub fn WebpEncoding::display_name(Self) -> String
+
+pub struct WebpInspection {
+  // private fields
+}
+pub fn WebpInspection::chunks(Self) -> Array[WebpChunk]
+pub fn WebpInspection::encoding(Self) -> WebpEncoding
+pub fn WebpInspection::frame_count(Self) -> Int
+pub fn WebpInspection::info(Self) -> ImageInfo
+pub fn WebpInspection::loop_count(Self) -> Int?
+pub fn WebpInspection::orientation(Self) -> Int?
+pub fn WebpInspection::riff_end(Self) -> Int
+
+pub(all) struct WebpRemoval {
+  name : String
+  offset : Int
+  original_length : Int
+  replacement_length : Int
+} derive(Eq, @debug.Debug)
+
+pub struct WebpSanitizeResult {
+  // private fields
+}
+pub fn WebpSanitizeResult::output(Self) -> Bytes
+pub fn WebpSanitizeResult::removed(Self) -> Array[WebpRemoval]
+pub fn WebpSanitizeResult::removed_bytes(Self) -> Int
+pub fn WebpSanitizeResult::verified(Self) -> Bool
 
 // Type aliases
 
