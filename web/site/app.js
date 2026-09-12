@@ -237,6 +237,11 @@ function cleanedFileName(name) {
   return `${stem}.clean.jpg`;
 }
 
+function removalLabel(name) {
+  if (name === "Data after EOI") return "JPEG 尾随数据（EOI 之后）";
+  return name;
+}
+
 function renderSanitizeResult(report) {
   elements.cleanResult.hidden = false;
   elements.cleanedPreview.src = state.downloadUrl;
@@ -252,7 +257,7 @@ function renderSanitizeResult(report) {
     for (const removal of report.removed ?? []) {
       const item = document.createElement("li");
       const retained = removal.replacementLength > 0 ? "（保留显示方向）" : "";
-      item.textContent = `${removal.name}${retained}`;
+      item.textContent = `${removalLabel(removal.name)}${retained}`;
       elements.removedList.append(item);
     }
     if (report.removedBytes > 0 && (report.removed ?? []).length === 0) {

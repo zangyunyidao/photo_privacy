@@ -26,6 +26,16 @@ fn metadata_named(items : Array[MetadataItem], name : String) -> MetadataItem? {
 }
 
 ///|
+fn removal_named(items : Array[JpegRemoval], name : String) -> JpegRemoval? {
+  for item in items {
+    if item.name == name {
+      return Some(item)
+    }
+  }
+  None
+}
+
+///|
 fn sample_jpeg_with_nested_exif() -> Bytes {
   b"\xFF\xD8" +
   b"\xFF\xE1\x00\x8AExif\x00\x00" +
@@ -133,8 +143,13 @@ test "sanitize JPEG metadata and preserve image scan bytes" {
   let original = sample_jpeg_with_metadata()
   let result = sanitize_jpeg(original).unwrap()
   assert_true(result.verified())
-  assert_eq(result.removed().length(), 3)
+  assert_eq(result.removed().length(), 4)
   assert_true(result.removed_bytes() > 0)
+  guard removal_named(result.removed(), "Data after EOI") is Some(trailing) else {
+    fail("missing trailing-data removal report")
+  }
+  assert_eq(trailing.original_length, 8)
+  assert_eq(trailing.replacement_length, 0)
   assert_true(result.output().find(b"\x11\x22\xFF\x00\x33") is Some(_))
   assert_true(result.output().find(b"Canon") is None)
   assert_true(result.output().find(b"Photoshop") is None)

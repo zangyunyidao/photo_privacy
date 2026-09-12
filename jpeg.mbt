@@ -625,6 +625,15 @@ pub fn sanitize_jpeg(data : Bytes) -> Result[JpegSanitizeResult, JpegError] {
       }
     }
   }
+  let trailing_length = data.length() - inspection.eoi_end()
+  if trailing_length > 0 {
+    removed.push(JpegRemoval::{
+      name: "Data after EOI",
+      offset: inspection.eoi_end(),
+      original_length: trailing_length,
+      replacement_length: 0,
+    })
+  }
   append_byte_range(output, data, cursor, inspection.eoi_end())
   let cleaned = Bytes::from_array(output)
   let verified = match inspect_jpeg(cleaned) {

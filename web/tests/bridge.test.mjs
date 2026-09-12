@@ -21,6 +21,7 @@ function sampleJpeg() {
     Buffer.from([0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]),
     Buffer.from([0x11, 0x22, 0xff, 0x00, 0x33]),
     Buffer.from([0xff, 0xd9]),
+    Buffer.from("trailing", "binary"),
   ]);
 }
 
@@ -76,6 +77,7 @@ test("Wasm bridge sanitizes and verifies JPEG", async () => {
   assert.equal(report.ok, true);
   assert.equal(report.verified, true);
   assert.ok(report.removedBytes > 0);
+  assert.equal(report.removed.some((item) => item.name === "Data after EOI"), true);
   assert.ok(bridge.state.output instanceof Uint8Array);
   assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("Canon")), false);
   assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("hello")), false);
