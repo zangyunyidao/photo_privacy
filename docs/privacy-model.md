@@ -26,7 +26,9 @@ watermarks, pixel-level steganography, or scene-derived information disappear.
 
 ## Local-first guarantee
 
-The planned production page is static. Files are read with browser APIs and
+The deployed production page is static. Files are read with browser APIs and
 processed in memory by MoonBit/WebAssembly. No image contents are sent over the
-network. The browser adapter will create an object URL for preview and a Blob URL
-for download, then revoke both when no longer needed.
+network. The browser adapter creates an object URL for preview and a Blob URL
+for download, then revokes both when no longer needed.
+
+Live application: <https://zangyunyidao.github.io/photo_privacy/>

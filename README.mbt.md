@@ -1,8 +1,10 @@
 # PhotoPrivacy
 
 PhotoPrivacy 是一个以隐私保护为目标的图像元数据检查与清理工具，主要使用
-MoonBit 实现。项目计划通过 WebAssembly 在浏览器本地处理文件，用户选择的
+MoonBit 实现。应用通过 WebAssembly 在浏览器本地处理文件，用户选择的
 图像不会上传到服务器。
+
+在线演示：<https://zangyunyidao.github.io/photo_privacy/>
 
 ## 项目作用
 
@@ -12,7 +14,7 @@ MoonBit 实现。项目计划通过 WebAssembly 在浏览器本地处理文件�
 
 ## 当前状态
 
-项目已经在报名基线之上进入功能开发阶段。格式检测依据文件实际签名，而不是
+项目已经在报名基线之上完成 JPEG 浏览器闭环。格式检测依据文件实际签名，而不是
 文件名或浏览器提供的 MIME 类型：
 
 - JPEG/JPG
@@ -24,7 +26,7 @@ MoonBit 实现。项目计划通过 WebAssembly 在浏览器本地处理文件�
 - HEIF/HEIC 系列 ISO-BMFF 品牌
 - AVIF
 
-JPEG 核心现已支持：
+JPEG 与 PNG 核心现已支持：
 
 - 扫描并报告 JPEG 标记段与图像尺寸；
 - 解析大端或小端 Exif/TIFF 中的常用设备、时间、方向和 GPS 字段；
@@ -32,6 +34,9 @@ JPEG 核心现已支持：
 - 在不重新压缩像素数据的情况下清理元数据；
 - 保留影响显示方向的最小 Exif 信息，并复检清理结果；
 - 拒绝截断、非法长度和异常 IFD 偏移等不安全输入。
+- 校验 PNG 块长度、顺序与 CRC，解析文本、时间、物理尺寸和 eXIf；
+- 清理 PNG 隐私块与未知辅助块，同时保留透明度、色彩和 APNG 动画结构；
+- 对未知关键块拒绝清理，并对清理结果进行二次解析验证。
 
 在项目根目录运行演示与测试：
 
@@ -48,10 +53,14 @@ moon test
 python -m http.server 8000 --directory web\dist
 ```
 
-打开 `http://127.0.0.1:8000/` 后，可以拖放或选择 JPEG，查看 MoonBit/Wasm
+打开 `http://127.0.0.1:8000/` 后，可以拖放或选择 JPEG/PNG，查看 MoonBit/Wasm
 解析出的元数据及风险，并生成经过二次检查的干净副本。
 
-## 计划交付内容
+线上 GitHub Pages 已部署；真实手机 JPEG 已完成检查、清理、下载、正常显示及
+重新上传复检。PNG 已完成代码、自动测试以及普通、透明和动画 PNG 的本地浏览器
+人工验收，等待 `feat/png` 合并后部署；WebP 目前只完成签名识别。
+
+## 后续交付内容
 
 比赛阶段的最小可交付版本将重点实现 JPEG、PNG 和 WebP 的完整检查与元数据
 清理。GIF 和 BMP 是扩展目标。TIFF、HEIF/HEIC、AVIF 和 SVG 在第一版中只
@@ -68,7 +77,7 @@ python -m http.server 8000 --directory web\dist
 数据、透明度和动画等必要结构。PhotoPrivacy 无法删除画面中可见的人脸、文字、
 水印，也不能保证消除未知隐写信息或从画面内容中推断出的事实。
 
-计划中的应用将在本地完成处理，不要求注册账号，不上传图像字节，也不调用远程
+当前应用在本地完成处理，不要求注册账号，不上传图像字节，也不调用远程
 图像处理服务。
 
 ## 项目文档
@@ -80,6 +89,7 @@ python -m http.server 8000 --directory web\dist
 - [隐私模型](docs/privacy-model.md)
 - [开发路线图](docs/roadmap.md)
 - [GitHub Issues 设计](docs/issues.md)
+- [PNG 实施计划](docs/png-implementation-plan.md)
 
 ## 开源说明
 

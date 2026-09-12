@@ -18,16 +18,22 @@
 - [x] 建立 Issue 5 的 MoonBit/Wasm 浏览器桥接。
 - [x] 完成 JPEG 的选择、检查、清理、复检和下载界面。
 - [x] 使用真实 JPEG 完成浏览器人工验收。
-- [ ] 合并并部署 GitHub Pages 在线演示。
+- [x] 合并并部署 GitHub Pages 在线演示。
 
 ## Milestone 3 — 多格式扩展
 
-- [ ] 完成 Issue 3：PNG 检查与清理。
-- [ ] 完成 Issue 4：WebP 检查与清理；时间不足时可作为扩展目标。
+- [x] 完成 Issue 3 的 PNG 检查、清理、复检和网页接入。
+- [x] 完成普通、透明和动画 PNG 的浏览器人工验收。
+- [ ] 推送并合并 `feat/png`，确认 GitHub Pages 中的 PNG 闭环。
+- [ ] 完成 Issue 4：WebP 检查与清理，并接入同一网页。
 
 ## Milestone 4 — 可用交付与验收
 
-- [ ] 完成 Issue 5：WebAssembly 界面、多格式接入、文档与验收。
+- [x] 完成 Issue 5 的 JPEG WebAssembly MVP、文档与线上演示。
+- [x] 将 Issue 3 的 PNG 检查与清理接入网页。
+- [ ] 将 Issue 4 的 WebP 检查与清理接入网页。
+- [ ] 完成 WebP 真实文件验收、全新克隆复现和最终文档。
+- [ ] 在 JPEG、PNG、WebP 全部合并并部署后重新提交比赛报名。
 
 ## GitHub Issues
 

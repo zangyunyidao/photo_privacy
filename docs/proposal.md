@@ -9,11 +9,14 @@ way to see what else is included.
 
 ## Proposed solution
 
-PhotoPrivacy is a MoonBit-first library and browser tool that identifies an
+PhotoPrivacy is a MoonBit-first library and deployed browser tool that identifies an
 image from its bytes, presents its container and metadata in understandable
 categories, explains privacy risks, and creates a cleaned copy locally. The
-browser host will use WebAssembly so image bytes do not need to leave the
+browser host uses WebAssembly so image bytes do not need to leave the
 device.
+
+The current public demo completes the JPEG workflow. PNG and WebP are the two
+remaining format milestones: <https://zangyunyidao.github.io/photo_privacy/>.
 
 ## Competition MVP
 
@@ -24,7 +27,7 @@ device.
 4. Remove non-rendering metadata from JPEG, PNG, and WebP without altering the
    encoded image payload where the format permits it.
 5. Re-scan sanitized output and report exactly what was removed.
-6. Provide a CLI, malformed-input tests, and a static WebAssembly demo with
+6. Provide malformed-input tests and a static WebAssembly demo with
    drag-and-drop, preview, and download.
 
 ## Non-goals for the MVP
@@ -47,5 +50,5 @@ cross-checked with independent tools where licensing permits.
 
 - Public Apache-2.0 GitHub repository with reviewable development history.
 - Reusable MoonBit packages and generated public interfaces.
-- CLI examples, executable documentation, tests, and continuous integration.
-- Static local-first browser demonstration suitable for GitHub Pages.
+- Executable documentation, tests, and continuous integration.
+- Deployed static local-first browser demonstration on GitHub Pages.

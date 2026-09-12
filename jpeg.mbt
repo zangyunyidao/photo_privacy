@@ -536,44 +536,12 @@ fn append_byte_range(
 
 ///|
 fn minimal_orientation_exif(orientation : Int) -> Bytes {
-  Bytes::from_array([
-    b'\xFF',
-    b'\xE1',
-    b'\x00',
-    b'\x22',
-    b'E',
-    b'x',
-    b'i',
-    b'f',
-    b'\x00',
-    b'\x00',
-    b'M',
-    b'M',
-    b'\x00',
-    b'\x2A',
-    b'\x00',
-    b'\x00',
-    b'\x00',
-    b'\x08',
-    b'\x00',
-    b'\x01',
-    b'\x01',
-    b'\x12',
-    b'\x00',
-    b'\x03',
-    b'\x00',
-    b'\x00',
-    b'\x00',
-    b'\x01',
-    ((orientation >> 8) & 0xFF).to_byte(),
-    (orientation & 0xFF).to_byte(),
-    b'\x00',
-    b'\x00',
-    b'\x00',
-    b'\x00',
-    b'\x00',
-    b'\x00',
-  ])
+  let output : Array[Byte] = [
+    b'\xFF', b'\xE1', b'\x00', b'\x22', b'E', b'x', b'i', b'f', b'\x00', b'\x00',
+  ]
+  let tiff = minimal_orientation_tiff(orientation)
+  append_byte_range(output, tiff, 0, tiff.length())
+  Bytes::from_array(output)
 }
 
 ///|

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { deflateSync } from "node:zlib";
 
 const artifact = new URL("../dist/photo_privacy.wasm", import.meta.url);
 
@@ -22,6 +23,44 @@ function sampleJpeg() {
     Buffer.from([0x11, 0x22, 0xff, 0x00, 0x33]),
     Buffer.from([0xff, 0xd9]),
     Buffer.from("trailing", "binary"),
+  ]);
+}
+
+function crc32(data) {
+  let crc = 0xffffffff;
+  for (const byte of data) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function pngChunk(name, payload) {
+  const type = Buffer.from(name, "ascii");
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(payload.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE(crc32(Buffer.concat([type, payload])));
+  return Buffer.concat([length, type, payload, checksum]);
+}
+
+function samplePng() {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(2, 0);
+  ihdr.writeUInt32BE(1, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  const pixels = Buffer.from([0, 255, 0, 0, 255, 0, 255, 0, 128]);
+  return Buffer.concat([
+    Buffer.from("89504e470d0a1a0a", "hex"),
+    pngChunk("IHDR", ihdr),
+    pngChunk("tEXt", Buffer.from("Author\0Alice", "latin1")),
+    pngChunk("iTXt", Buffer.from("Description\0\0\0\0\0private note", "utf8")),
+    pngChunk("IDAT", deflateSync(pixels)),
+    pngChunk("IEND", Buffer.alloc(0)),
+    Buffer.from("trailing", "ascii"),
   ]);
 }
 
@@ -84,6 +123,37 @@ test("Wasm bridge sanitizes and verifies JPEG", async () => {
   const rescan = await createBridge(bridge.state.output);
   assert.equal(rescan.exports.photo_privacy_inspect(), 0);
   assert.equal(resultJson(rescan.state).orientation, 6);
+});
+
+test("Wasm bridge inspects PNG metadata and image properties", async () => {
+  const bridge = await createBridge(samplePng());
+  assert.equal(bridge.exports.photo_privacy_inspect(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.ok, true);
+  assert.equal(report.format, "PNG");
+  assert.equal(report.width, 2);
+  assert.equal(report.height, 1);
+  assert.equal(report.bitDepth, 8);
+  assert.equal(report.colorType, 6);
+  assert.equal(report.hasAlpha, true);
+  assert.equal(report.isAnimated, false);
+  assert.equal(report.metadata.some((item) => item.name === "Author"), true);
+});
+
+test("Wasm bridge sanitizes and verifies PNG", async () => {
+  const bridge = await createBridge(samplePng());
+  assert.equal(bridge.exports.photo_privacy_sanitize(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.ok, true);
+  assert.equal(report.format, "PNG");
+  assert.equal(report.verified, true);
+  assert.equal(report.removed.some((item) => item.name === "PNG text (tEXt)"), true);
+  assert.equal(report.removed.some((item) => item.name === "Data after IEND"), true);
+  assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("Alice")), false);
+  assert.equal(Buffer.from(bridge.state.output).includes(Buffer.from("private note")), false);
+  const rescan = await createBridge(bridge.state.output);
+  assert.equal(rescan.exports.photo_privacy_inspect(), 0);
+  assert.equal(resultJson(rescan.state).metadata.length, 0);
 });
 
 test("Wasm bridge rejects unsupported input", async () => {

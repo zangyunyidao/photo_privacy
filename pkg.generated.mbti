@@ -10,7 +10,11 @@ pub fn detect_format(Bytes) -> ImageFormat
 
 pub fn inspect_jpeg(Bytes) -> Result[JpegInspection, JpegError]
 
+pub fn inspect_png(Bytes) -> Result[PngInspection, PngError]
+
 pub fn sanitize_jpeg(Bytes) -> Result[JpegSanitizeResult, JpegError]
+
+pub fn sanitize_png(Bytes) -> Result[PngSanitizeResult, PngError]
 
 // Errors
 pub(all) suberror BinaryReadError {
@@ -26,6 +30,20 @@ pub(all) suberror JpegError {
   InvalidSegmentLength(Int, Int)
   MissingEoi
   SegmentLimitExceeded(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) suberror PngError {
+  NotPng
+  UnexpectedEof(Int, Int, Int)
+  InvalidChunkType(Int)
+  InvalidChunkLength(Int, Int)
+  CrcMismatch(Int, UInt, UInt)
+  InvalidChunkOrder(String, Int)
+  MissingIhdr
+  MissingIdat
+  MissingIend
+  UnknownCriticalChunk(String, Int)
+  ChunkLimitExceeded(Int)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -155,6 +173,52 @@ pub(all) struct ParseDiagnostic {
   offset : Int?
   severity : DiagnosticSeverity
 } derive(Eq, @debug.Debug)
+
+pub(all) struct PngChunk {
+  name : String
+  offset : Int
+  data_offset : Int
+  data_length : Int
+  end_offset : Int
+  crc : UInt
+  critical : Bool
+  known : Bool
+  role : PngChunkRole
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PngChunkRole {
+  Structure
+  ImageData
+  Metadata
+  ColorData
+  AnimationData
+  UnknownPngRole
+} derive(Eq, @debug.Debug)
+
+pub struct PngInspection {
+  // private fields
+}
+pub fn PngInspection::bit_depth(Self) -> Int
+pub fn PngInspection::chunks(Self) -> Array[PngChunk]
+pub fn PngInspection::color_type(Self) -> Int
+pub fn PngInspection::iend_end(Self) -> Int
+pub fn PngInspection::info(Self) -> ImageInfo
+pub fn PngInspection::orientation(Self) -> Int?
+
+pub(all) struct PngRemoval {
+  name : String
+  offset : Int
+  original_length : Int
+  replacement_length : Int
+} derive(Eq, @debug.Debug)
+
+pub struct PngSanitizeResult {
+  // private fields
+}
+pub fn PngSanitizeResult::output(Self) -> Bytes
+pub fn PngSanitizeResult::removed(Self) -> Array[PngRemoval]
+pub fn PngSanitizeResult::removed_bytes(Self) -> Int
+pub fn PngSanitizeResult::verified(Self) -> Bool
 
 pub(all) enum PrivacyRisk {
   NoRisk
