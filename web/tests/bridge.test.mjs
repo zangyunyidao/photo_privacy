@@ -250,6 +250,11 @@ test("Wasm bridge accepts real lossy, transparent lossless, and animated WebP", 
     assert.equal(report.width, 2, name);
     assert.equal(report.hasAlpha, hasAlpha, name);
     assert.equal(report.isAnimated, isAnimated, name);
+    assert.equal(
+      report.diagnostics.some((item) => item.code === "webp.alpha-flag-mismatch"),
+      false,
+      name,
+    );
     assert.equal(bridge.exports.photo_privacy_sanitize(), 0, name);
     assert.equal(resultJson(bridge.state).verified, true, name);
     assert.deepEqual(Buffer.from(bridge.state.output), input, name);

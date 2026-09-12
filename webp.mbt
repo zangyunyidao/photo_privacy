@@ -283,11 +283,13 @@ fn webp_parse_nested_chunks(
   data : Bytes,
   start : Int,
   end : Int,
+  frame_dimensions : ImageDimensions,
   diagnostics : Array[ParseDiagnostic],
-) -> Result[Unit, WebpError] {
+) -> Result[Bool, WebpError] {
   let mut position = start
   let mut count = 0
   let mut seen_image = false
+  let mut seen_alpha = false
   while position < end {
     if count >= 1024 {
       return Err(ChunkLimitExceeded(count))
@@ -321,8 +323,55 @@ fn webp_parse_nested_chunks(
           InvalidChunkOrder("ANMF contains multiple image bitstreams", position),
         )
       }
+      let nested = WebpChunk::{
+        name,
+        offset: position,
+        data_offset: position + 8,
+        data_length: length,
+        padded_length: padded,
+        end_offset: position + 8 + padded,
+        known: true,
+        role: WebpImageData,
+      }
+      if name == "VP8 " {
+        let actual = match webp_dimensions_from_vp8(data, nested) {
+          Ok(value) => value
+          Err(error) => return Err(error)
+        }
+        if actual != frame_dimensions {
+          return Err(
+            InvalidChunkOrder(
+              "ANMF VP8 dimensions do not match the frame header", position,
+            ),
+          )
+        }
+      } else {
+        let (actual, alpha) = match webp_vp8l_properties(data, nested) {
+          Ok(value) => value
+          Err(error) => return Err(error)
+        }
+        if actual != frame_dimensions {
+          return Err(
+            InvalidChunkOrder(
+              "ANMF VP8L dimensions do not match the frame header", position,
+            ),
+          )
+        }
+        if alpha {
+          seen_alpha = true
+        }
+      }
       seen_image = true
-    } else if name != "ALPH" {
+    } else if name == "ALPH" {
+      if seen_image || seen_alpha || length < 1 {
+        return Err(
+          InvalidChunkOrder(
+            "ANMF ALPH must occur once before a VP8 bitstream", position,
+          ),
+        )
+      }
+      seen_alpha = true
+    } else {
       webp_diagnostic(
         diagnostics,
         "webp.unknown-frame-chunk",
@@ -336,7 +385,7 @@ fn webp_parse_nested_chunks(
   if !seen_image {
     Err(InvalidChunkOrder("ANMF is missing a VP8/VP8L bitstream", start))
   } else {
-    Ok(())
+    Ok(seen_alpha)
   }
 }
 
@@ -346,7 +395,7 @@ fn webp_validate_anmf(
   chunk : WebpChunk,
   canvas : ImageDimensions?,
   diagnostics : Array[ParseDiagnostic],
-) -> Result[Unit, WebpError] {
+) -> Result[Bool, WebpError] {
   if chunk.data_length < 24 {
     return Err(InvalidChunkLength(chunk.name, chunk.offset, chunk.data_length))
   }
@@ -355,6 +404,14 @@ fn webp_validate_anmf(
   let y = webp_u24_le(data, start + 3).unwrap() * 2
   let width = webp_u24_le(data, start + 6).unwrap() + 1
   let height = webp_u24_le(data, start + 9).unwrap() + 1
+  if (byte_int(data[start + 15]) & 0xFC) != 0 {
+    return Err(
+      InvalidChunkOrder(
+        "ANMF frame header has nonzero reserved bits",
+        chunk.offset,
+      ),
+    )
+  }
   match canvas {
     Some(dimensions) =>
       if x > dimensions.width ||
@@ -371,6 +428,7 @@ fn webp_validate_anmf(
     data,
     start + 16,
     start + chunk.data_length,
+    { width, height, },
     diagnostics,
   )
 }
@@ -517,6 +575,15 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
         Ok(value) => value
         Err(error) => return Err(error)
       }
+      match dimensions {
+        Some(canvas) if canvas != value =>
+          return Err(
+            InvalidChunkOrder(
+              "VP8 dimensions do not match the VP8X canvas", position,
+            ),
+          )
+        _ => ()
+      }
       if dimensions is None {
         dimensions = Some(value)
         encoding = Some(Lossy)
@@ -529,6 +596,15 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
       let (value, alpha) = match webp_vp8l_properties(data, chunk) {
         Ok(value) => value
         Err(error) => return Err(error)
+      }
+      match dimensions {
+        Some(canvas) if canvas != value =>
+          return Err(
+            InvalidChunkOrder(
+              "VP8L dimensions do not match the VP8X canvas", position,
+            ),
+          )
+        _ => ()
       }
       if dimensions is None {
         dimensions = Some(value)
@@ -546,7 +622,7 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
       }
       seen_alpha = true
     } else if name == "ICCP" {
-      if seen_image || seen_iccp {
+      if seen_image || seen_anim || frame_count > 0 || seen_iccp {
         return Err(
           InvalidChunkOrder("ICCP must occur once before image data", position),
         )
@@ -615,7 +691,7 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
         )
       }
       match webp_validate_anmf(data, chunk, dimensions, diagnostics) {
-        Ok(_) => ()
+        Ok(alpha) => if alpha { seen_alpha = true }
         Err(error) => return Err(error)
       }
       frame_count += 1
