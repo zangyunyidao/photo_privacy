@@ -156,6 +156,9 @@ fn png_chunk_name(data : Bytes, offset : Int) -> String? {
       return None
     }
   }
+  if byte_int(data[offset + 2]) >= 97 && byte_int(data[offset + 2]) <= 122 {
+    return None
+  }
   Some(@utf8.decode_lossy(data[offset:offset + 4]))
 }
 

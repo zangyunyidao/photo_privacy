@@ -264,6 +264,34 @@ test "reject unsafe PNG structures" {
 }
 
 ///|
+test "reject truncated, oversized, invalid, and nonconsecutive PNG chunks" {
+  assert_true(
+    inspect_png(test_png([b"\x00\x00\x00\x10tEXt"]))
+    is Err(UnexpectedEof(_, _, _)),
+  )
+  assert_true(
+    inspect_png(test_png([b"\x80\x00\x00\x00IHDR\x00\x00\x00\x00"]))
+    is Err(InvalidChunkLength(_, _)),
+  )
+  assert_true(
+    inspect_png(test_png([b"\x00\x00\x00\x00IHdR\x00\x00\x00\x00"]))
+    is Err(InvalidChunkType(_)),
+  )
+  let separated_idat = test_png([
+    test_ihdr(),
+    test_png_chunk("IDAT", b"first"),
+    test_png_chunk("tEXt", b"Comment\x00between"),
+    test_png_chunk("IDAT", b"second"),
+    test_png_chunk("IEND", b""),
+  ])
+  assert_true(inspect_png(separated_idat) is Err(InvalidChunkOrder(_, _)))
+  let malformed_apng = test_minimal_png(extra_before_idat=[
+    test_png_chunk("acTL", b"short"),
+  ])
+  assert_true(inspect_png(malformed_apng) is Err(InvalidChunkOrder(_, _)))
+}
+
+///|
 test "inspect but refuse to sanitize an unknown critical PNG chunk" {
   let png = test_minimal_png(extra_before_idat=[
     test_png_chunk("ABCD", b"critical"),
