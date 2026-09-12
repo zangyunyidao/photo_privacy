@@ -4,7 +4,7 @@
 |---|---:|---:|---:|---|
 | JPEG/JPG | Yes | Implemented | Implemented | Segment inventory, common Exif/TIFF fields, XMP/IPTC/comments, orientation retention, post-clean verification |
 | PNG/APNG | Yes | Implemented | Implemented | CRC-validated chunks, text/eXIf/time/physical data cleaning; preserves transparency, color and animation; local browser verification completed |
-| WebP | Yes | Implemented | Implemented | RIFF/VP8/VP8L/VP8X, EXIF/XMP/unknown cleaning, ICC/alpha/animation retention; browser manual verification pending |
+| WebP | Yes | Implemented | Implemented | RIFF/VP8/VP8L/VP8X, EXIF/XMP/unknown cleaning, ICC/alpha/animation retention; real-file browser and Wasm verification completed |
 | GIF87a/89a | Yes | Detection only | No | Cleaning is outside the current scope |
 | BMP | Yes | Detection only | No | Cleaning is outside the current scope |
 | TIFF | Yes | Detection only | No | Metadata and image storage are tightly coupled |

@@ -2,15 +2,16 @@
 
 ## What the tool removes
 
-The default privacy policy will remove recognized metadata that is not required
+The default privacy policy removes recognized metadata that is not required
 to decode and display the image, including location, capture timestamps, device
 and software identity, author/copyright text, comments, XMP, IPTC, and trailing
 payloads outside the valid container.
 
 Color profiles, orientation, transparency, and animation can affect visible
-rendering. Their treatment must be explicit in the report. If removing
-orientation would change appearance, the UI must warn the user or offer a pixel
-rebuild mode that applies orientation before re-encoding.
+rendering, so their treatment is explicit in the report. When orientation is
+needed for the image to display correctly, PhotoPrivacy retains a minimal Exif
+orientation record while removing the other supported metadata. Encoded image
+payloads are copied without decoding or recompression.
 
 ## Meaning of a clean result
 
