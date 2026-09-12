@@ -14,16 +14,16 @@ Browser File / CLI Bytes
   -> output Bytes / browser Blob download
 ```
 
-## Planned MoonBit packages
+## Current implementation layout
 
-- `detect`: signature and ISO-BMFF brand detection.
-- `binary`: bounds-checked endian-aware readers and parse errors.
-- `model`: normalized image, metadata, risk, and sanitization-report types.
-- `exif`: TIFF/IFD structures shared by JPEG, PNG, and WebP metadata.
-- `jpeg`, `png`, `webp`: format-specific parsers and sanitizers.
-- `sanitize`: policy selection, removal accounting, and verification.
-- `cmd/photo_privacy`: file-oriented native command-line host.
-- `wasm/api`: byte-oriented exports for the browser host.
+- `photo_privacy.mbt`：文件签名与 ISO-BMFF 品牌识别。
+- `binary_reader.mbt`：带边界检查和字节序支持的二进制读取器。
+- `image_model.mbt`：统一图像信息、元数据、风险和诊断模型。
+- `exif.mbt`：当前由 JPEG 使用的 TIFF/IFD 解析；Issue #3 将把入口整理为 PNG/WebP 可复用形式。
+- `jpeg.mbt`：JPEG 段解析、隐私清理和清理后复检。
+- `web/wasm`：面向浏览器宿主的整数 ABI 与 Wasm 导出。
+- `web/site`：静态网页、预览、报告和下载适配器。
+- `png.mbt`、`webp.mbt`：后续 Issue #3、#4 新增的格式实现。
 
 HTML、CSS 与少量 JavaScript 适配器负责浏览器文件 API、预览、DOM 渲染和下载。
 浏览器通过整数 ABI 将图像字节分块传给 MoonBit 编译出的 WebAssembly；解析、

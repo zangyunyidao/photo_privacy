@@ -1,19 +1,19 @@
 # Supported Format Matrix
 
-| Format | Detect now | MVP inspection | MVP sanitize | Notes |
+| Format | Signature detection | Inspection | Sanitization | Notes |
 |---|---:|---:|---:|---|
 | JPEG/JPG | Yes | Implemented | Implemented | Segment inventory, common Exif/TIFF fields, XMP/IPTC/comments, orientation retention, post-clean verification |
-| PNG/APNG | Yes | Yes | Yes | Chunks, textual data, eXIf, time; preserve animation |
-| WebP | Yes | Yes | Yes | RIFF, EXIF, XMP, ICC, alpha, animation flags |
-| GIF87a/89a | Yes | Basic | Stretch | Preserve animation and loop behavior |
-| BMP | Yes | Basic | Stretch | Usually little removable metadata |
-| TIFF | Yes | Partial | No | Metadata and image storage are tightly coupled |
-| HEIF/HEIC | Yes | Basic container | No | ISO-BMFF item relations are out of MVP scope |
-| AVIF | Yes | Basic container | No | ISO-BMFF item relations are out of MVP scope |
-| SVG | Planned reject | No | No | XML/script sanitization is a different task |
+| PNG/APNG | Yes | Planned (Issue #3) | Planned (Issue #3) | Chunks, textual data, eXIf, time; preserve transparency, color and animation |
+| WebP | Yes | Planned (Issue #4) | Planned (Issue #4) | RIFF, EXIF, XMP, ICC, alpha and animation flags |
+| GIF87a/89a | Yes | Detection only | No | Cleaning is outside the current scope |
+| BMP | Yes | Detection only | No | Cleaning is outside the current scope |
+| TIFF | Yes | Detection only | No | Metadata and image storage are tightly coupled |
+| HEIF/HEIC | Yes | Brand detection only | No | ISO-BMFF item relations are outside the current scope |
+| AVIF | Yes | Brand detection only | No | ISO-BMFF item relations are outside the current scope |
+| SVG | No | No | No | XML/script sanitization is a different task |
 
-"Yes" will only be claimed when tests cover valid, malformed, truncated, and
-misleading-extension inputs. Unsupported formats are never silently rewritten.
+“Implemented” 仅用于已经覆盖正常、畸形、截断和误导性扩展名输入，并完成清理后
+复检的格式。不支持的格式不会被静默重写。
 
 ## Primary specifications
 
