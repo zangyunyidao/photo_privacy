@@ -192,10 +192,38 @@ fn webp_chunk_role(name : String) -> WebpChunkRole {
   match name {
     "VP8X" => WebpStructure
     "VP8 " | "VP8L" | "ALPH" => WebpImageData
-    "EXIF" | "XMP " => WebpMetadata
+    "EXIF"
+    | "XMP "
+    | "IART"
+    | "ICOP"
+    | "INAM"
+    | "ICMT"
+    | "ICRD"
+    | "ISFT"
+    | "IENG"
+    | "ISBJ"
+    | "IKEY" => WebpMetadata
     "ICCP" => WebpColorData
     "ANIM" | "ANMF" => WebpAnimationData
     _ => UnknownWebpRole
+  }
+}
+
+///|
+fn webp_riff_info_spec(
+  name : String,
+) -> (String, MetadataCategory, PrivacyRisk)? {
+  match name {
+    "IART" => Some(("Artist", Author, Medium))
+    "ICOP" => Some(("Copyright", Author, Medium))
+    "INAM" => Some(("Title", Description, Low))
+    "ICMT" => Some(("Comment", Description, Medium))
+    "ICRD" => Some(("Creation date", CaptureTime, Medium))
+    "ISFT" => Some(("Software", Software, Low))
+    "IENG" => Some(("Engineer", Author, Medium))
+    "ISBJ" => Some(("Subject", Description, Low))
+    "IKEY" => Some(("Keywords", Description, Medium))
+    _ => None
   }
 }
 
@@ -559,10 +587,13 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
       flags = feature_flags
       encoding = Some(Extended)
       seen_vp8x = true
-    } else if !seen_vp8x && chunk_count > 0 {
+    } else if !seen_vp8x &&
+      chunk_count > 0 &&
+      role != WebpMetadata &&
+      role != UnknownWebpRole {
       return Err(
         InvalidChunkOrder(
-          "simple WebP may contain only one image chunk", position,
+          "simple WebP may only append metadata or unknown chunks", position,
         ),
       )
     } else if name == "VP8 " {
@@ -672,6 +703,16 @@ pub fn inspect_webp(data : Bytes) -> Result[WebpInspection, WebpError] {
         "Adobe XMP packet (" + length.to_string() + " bytes)",
         Other,
         High,
+        Removable,
+      )
+    } else if webp_riff_info_spec(name) is Some((label, category, risk)) {
+      webp_add_metadata(
+        metadata,
+        "RIFF/INFO/" + name,
+        label,
+        bounded_text(data, chunk.data_offset, length),
+        category,
+        risk,
         Removable,
       )
     } else if name == "ANIM" {
@@ -885,6 +926,14 @@ pub fn sanitize_webp(data : Bytes) -> Result[WebpSanitizeResult, WebpError] {
     } else if chunk.name == "XMP " {
       removed.push(WebpRemoval::{
         name: "WebP XMP (XMP )",
+        offset: chunk.offset,
+        original_length: chunk.end_offset - chunk.offset,
+        replacement_length: 0,
+      })
+      removed_bytes += chunk.end_offset - chunk.offset
+    } else if webp_riff_info_spec(chunk.name) is Some((label, _, _)) {
+      removed.push(WebpRemoval::{
+        name: "RIFF information (" + chunk.name + ": " + label + ")",
         offset: chunk.offset,
         original_length: chunk.end_offset - chunk.offset,
         replacement_length: 0,

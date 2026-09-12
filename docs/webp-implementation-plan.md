@@ -22,7 +22,8 @@ Issue #4 将为有损、无损、透明和动画 WebP 建立与 JPEG/PNG 相同�
 - 对所有长度和偏移做边界检查，并限制块数量。
 - 报告 RIFF 声明范围后的尾随数据。
 - 识别 `VP8 `、`VP8L`、`VP8X`、`ALPH`、`ICCP`、`EXIF`、`XMP `、
-  `ANIM` 和 `ANMF`。
+  `ANIM`、`ANMF`，以及实际文件中可能追加的 `IART`、`ICOP`、`INAM`、
+  `ICMT` 等传统 RIFF 信息块。
 
 ## 阶段二：图像属性、Exif 与动画
 

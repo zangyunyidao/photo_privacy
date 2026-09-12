@@ -155,6 +155,30 @@ test "inspect simple lossy WebP" {
 }
 
 ///|
+test "inspect and clean RIFF information appended to a simple WebP" {
+  let original = test_webp_riff([
+    test_webp_chunk("VP8 ", test_vp8_payload(16, 8)),
+    test_webp_chunk("IART", b"test\x00\x00"),
+    test_webp_chunk("ICOP", b"2010\x00\x00"),
+    test_webp_chunk("INAM", b"webp-03.webp\x00\x00"),
+    test_webp_chunk("ICMT", b"test vector\x00"),
+  ])
+  let report = inspect_webp(original).unwrap()
+  let metadata = report.info().metadata()
+  guard test_webp_metadata_named(metadata, "Artist") is Some(artist) else {
+    fail("missing RIFF artist")
+  }
+  assert_eq(artist.value, "test")
+  assert_true(test_webp_metadata_named(metadata, "Copyright") is Some(_))
+  assert_true(test_webp_metadata_named(metadata, "Title") is Some(_))
+  assert_true(test_webp_metadata_named(metadata, "Comment") is Some(_))
+  let cleaned = sanitize_webp(original).unwrap()
+  assert_true(cleaned.verified())
+  assert_eq(inspect_webp(cleaned.output()).unwrap().chunks().length(), 1)
+  assert_true(cleaned.output().find(b"webp-03.webp") is None)
+}
+
+///|
 test "inspect simple lossless WebP with alpha" {
   let data = test_webp_riff([
     test_webp_chunk("VP8L", test_vp8l_payload(9, 7, true)),

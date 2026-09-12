@@ -302,6 +302,7 @@ function removalLabel(name) {
   if (name === "Data after RIFF") return "WebP RIFF 范围后的尾随数据";
   if (name.startsWith("WebP unknown chunk")) return name.replace("WebP unknown chunk", "WebP 未知块");
   if (name.startsWith("ANMF unknown chunk")) return name.replace("ANMF unknown chunk", "动画帧内未知块");
+  if (name.startsWith("RIFF information")) return name.replace("RIFF information", "RIFF 信息");
   return name;
 }
 

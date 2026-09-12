@@ -111,6 +111,22 @@ function sampleWebp() {
   return Buffer.concat([header, chunks, Buffer.from("trailing")]);
 }
 
+function sampleRiffInfoWebp() {
+  const simple = Buffer.from(realWebpSamples.lossy, "base64");
+  const chunks = Buffer.concat([
+    simple.subarray(12),
+    riffChunk("IART", Buffer.from("test\0\0", "latin1")),
+    riffChunk("ICOP", Buffer.from("2010\0\0", "latin1")),
+    riffChunk("INAM", Buffer.from("webp-03.webp\0\0", "latin1")),
+    riffChunk("ICMT", Buffer.from("test vector\0", "latin1")),
+  ]);
+  const header = Buffer.alloc(12);
+  header.write("RIFF", 0, "ascii");
+  header.writeUInt32LE(chunks.length + 4, 4);
+  header.write("WEBP", 8, "ascii");
+  return Buffer.concat([header, chunks]);
+}
+
 async function createBridge(input) {
   const wasm = await readFile(artifact);
   const state = { input: new Uint8Array(input), output: null, json: [] };
@@ -259,6 +275,24 @@ test("Wasm bridge accepts real lossy, transparent lossless, and animated WebP", 
     assert.equal(resultJson(bridge.state).verified, true, name);
     assert.deepEqual(Buffer.from(bridge.state.output), input, name);
   }
+});
+
+test("Wasm bridge cleans RIFF INFO metadata appended to a simple WebP", async () => {
+  const bridge = await createBridge(sampleRiffInfoWebp());
+  assert.equal(bridge.exports.photo_privacy_inspect(), 0);
+  const report = resultJson(bridge.state);
+  assert.equal(report.metadata.some((item) => item.name === "Artist"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Copyright"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Title"), true);
+  assert.equal(report.metadata.some((item) => item.name === "Comment"), true);
+  assert.equal(bridge.exports.photo_privacy_sanitize(), 0);
+  const cleaned = resultJson(bridge.state);
+  assert.equal(cleaned.verified, true);
+  assert.equal(cleaned.removed.length, 4);
+  assert.deepEqual(
+    Buffer.from(bridge.state.output),
+    Buffer.from(realWebpSamples.lossy, "base64"),
+  );
 });
 
 test("Wasm bridge rejects unsupported input", async () => {
