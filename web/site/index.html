@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="PhotoPrivacy：在浏览器本地检查并清理 JPEG 图像元数据。"
+    />
+    <title>PhotoPrivacy · 本地图像隐私清理</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <a class="brand" href="./" aria-label="PhotoPrivacy 首页">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>PhotoPrivacy</span>
+      </a>
+      <div class="local-badge">
+        <span class="status-dot" aria-hidden="true"></span>
+        本地处理 · 不上传图片
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">MOONBIT · WEBASSEMBLY</p>
+        <h1 id="page-title">分享图片前，先看看它还携带了什么。</h1>
+        <p class="intro-copy">
+          将 JPEG 拖入页面，PhotoPrivacy 会在你的浏览器中检查位置、拍摄时间、
+          设备和注释等信息，并生成清理后的副本。
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="图像隐私检查工作区">
+        <div
+          id="drop-zone"
+          class="drop-zone"
+          tabindex="0"
+          role="button"
+          aria-describedby="drop-help"
+        >
+          <input id="file-input" type="file" accept="image/*,.jpg,.jpeg" hidden />
+          <div class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="img">
+              <path d="M24 31V10m0 0-8 8m8-8 8 8M9 30v6a4 4 0 0 0 4 4h22a4 4 0 0 0 4-4v-6" />
+            </svg>
+          </div>
+          <h2>拖入图像，或点击选择</h2>
+          <p id="drop-help">当前清理功能支持 JPEG，单个文件最大 50 MiB</p>
+          <button id="choose-button" class="button button-primary" type="button">
+            选择本地图像
+          </button>
+        </div>
+
+        <div id="loading" class="loading" hidden aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>MoonBit/Wasm 正在检查图像……</span>
+        </div>
+
+        <div id="error-panel" class="message message-error" hidden role="alert"></div>
+
+        <section id="result-panel" class="result-panel" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">检查结果</p>
+              <h2>图像与隐私信息</h2>
+            </div>
+            <button id="replace-button" class="button button-secondary" type="button">
+              更换图像
+            </button>
+          </div>
+
+          <div class="summary-grid">
+            <article class="preview-card">
+              <div class="preview-stage">
+                <img id="original-preview" alt="所选图像预览" />
+              </div>
+              <div class="file-row">
+                <div>
+                  <strong id="file-name"></strong>
+                  <span id="file-size"></span>
+                </div>
+                <span id="format-chip" class="chip chip-neutral"></span>
+              </div>
+            </article>
+
+            <article class="facts-card">
+              <h3>文件概览</h3>
+              <dl class="facts-list">
+                <div><dt>真实格式</dt><dd id="fact-format">—</dd></div>
+                <div><dt>图像尺寸</dt><dd id="fact-dimensions">—</dd></div>
+                <div><dt>JPEG 段数</dt><dd id="fact-segments">—</dd></div>
+                <div><dt>显示方向</dt><dd id="fact-orientation">—</dd></div>
+                <div><dt>处理位置</dt><dd>当前浏览器</dd></div>
+              </dl>
+            </article>
+          </div>
+
+          <article class="metadata-card">
+            <div class="card-heading">
+              <div>
+                <h3>发现的元数据</h3>
+                <p>“可移除”项目将在清理时删除；方向信息会按需要保留。</p>
+              </div>
+              <span id="metadata-count" class="count-badge">0 项</span>
+            </div>
+            <div id="metadata-empty" class="empty-state" hidden>
+              没有发现当前版本能够识别的元数据。
+            </div>
+            <div id="metadata-table-wrap" class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>类别</th>
+                    <th>名称</th>
+                    <th>值</th>
+                    <th>风险</th>
+                    <th>处理方式</th>
+                  </tr>
+                </thead>
+                <tbody id="metadata-body"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <div id="diagnostics" class="message message-warning" hidden></div>
+
+          <article class="action-card">
+            <div>
+              <p class="eyebrow">生成安全副本</p>
+              <h3>清除非显示必需信息</h3>
+              <p>
+                MoonBit 会重写 JPEG 容器、原样保留压缩图像数据，并再次检查输出。
+              </p>
+            </div>
+            <button id="sanitize-button" class="button button-accent" type="button">
+              洗去信息
+            </button>
+          </article>
+
+          <section id="clean-result" class="clean-result" hidden aria-live="polite">
+            <div class="clean-preview-wrap">
+              <img id="cleaned-preview" alt="清理后的 JPEG 预览" />
+              <span class="clean-icon" aria-hidden="true">✓</span>
+            </div>
+            <div class="clean-copy">
+              <p class="eyebrow">清理完成</p>
+              <h3>干净副本已经生成并通过复检</h3>
+              <p id="clean-summary"></p>
+              <ul id="removed-list"></ul>
+            </div>
+            <button id="download-button" class="button button-primary" type="button">
+              下载干净副本
+            </button>
+          </section>
+        </section>
+      </section>
+
+      <section class="privacy-notes" aria-labelledby="privacy-title">
+        <div>
+          <p class="eyebrow">隐私边界</p>
+          <h2 id="privacy-title">图片字节不会离开此页面</h2>
+        </div>
+        <div class="note-grid">
+          <p><strong>不会上传</strong><span>没有账号、后端或远程图像处理 API。</span></p>
+          <p><strong>不会重压缩</strong><span>JPEG 压缩扫描数据保持原样。</span></p>
+          <p><strong>不能隐藏画面</strong><span>人脸、文字、水印等可见内容不会被删除。</span></p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>PhotoPrivacy · MoonBit 九月黑客松</span>
+      <a href="https://github.com/zangyunyidao/photo_privacy">查看源代码</a>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

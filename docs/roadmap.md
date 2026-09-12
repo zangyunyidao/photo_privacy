@@ -15,7 +15,10 @@
 ## Milestone 2 — JPEG 完整闭环
 
 - [x] 完成 Issue 2：JPEG/Exif 检查、清理与二次验证。
-- [ ] 完成 Issue 5 的 JPEG 网页流程。
+- [x] 建立 Issue 5 的 MoonBit/Wasm 浏览器桥接。
+- [x] 完成 JPEG 的选择、检查、清理、复检和下载界面。
+- [x] 使用真实 JPEG 完成浏览器人工验收。
+- [ ] 合并并部署 GitHub Pages 在线演示。
 
 ## Milestone 3 — 多格式扩展
 
