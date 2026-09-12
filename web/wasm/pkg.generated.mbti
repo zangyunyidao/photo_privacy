@@ -1,0 +1,15 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "zangyunyidao/photo_privacy/web/wasm"
+
+// Values
+pub fn inspect_loaded_file() -> Int
+
+pub fn sanitize_loaded_file() -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
