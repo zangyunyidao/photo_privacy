@@ -29,6 +29,22 @@ moon test
 
 也可以直接使用[在线演示](https://zangyunyidao.github.io/photo_privacy/)。
 
+### 在 VS Code 中一键运行
+
+使用 VS Code 打开项目根目录后，按 `Ctrl+Shift+B`，或选择菜单“终端 → 运行生成
+任务”。默认任务 `PhotoPrivacy: 构建并打开网页` 会依次完成：
+
+1. 将 MoonBit 浏览器接口编译为 WebAssembly；
+2. 选择从 8000 开始的可用本地端口并启动静态服务器；
+3. 等待服务器就绪后用系统默认浏览器打开页面。
+
+任务运行期间服务器会保持开启。使用 `Ctrl+C` 或点击 VS Code 终端中的“终止任务”
+即可停止服务器。也可以从“终端 → 运行任务”选择
+`PhotoPrivacy: 运行全部测试` 完成核心和 Wasm 桥接测试。
+
+这个任务只是开发入口，不会取代 MoonBit 代码接口。其他 MoonBit 包仍可直接调用
+`detect_format`、`inspect_jpeg`、`sanitize_jpeg`、`inspect_png` 和 `sanitize_png`。
+
 在 Windows PowerShell 中构建：
 
 ```powershell
