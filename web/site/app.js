@@ -15,7 +15,16 @@ const elements = {
   factFormat: document.querySelector("#fact-format"),
   factDimensions: document.querySelector("#fact-dimensions"),
   factSegments: document.querySelector("#fact-segments"),
+  factUnitLabel: document.querySelector("#fact-unit-label"),
   factOrientation: document.querySelector("#fact-orientation"),
+  factBitDepth: document.querySelector("#fact-bit-depth"),
+  factColorType: document.querySelector("#fact-color-type"),
+  factAlpha: document.querySelector("#fact-alpha"),
+  factAnimation: document.querySelector("#fact-animation"),
+  factBitDepthRow: document.querySelector("#fact-bit-depth-row"),
+  factColorRow: document.querySelector("#fact-color-row"),
+  factAlphaRow: document.querySelector("#fact-alpha-row"),
+  factAnimationRow: document.querySelector("#fact-animation-row"),
   metadataCount: document.querySelector("#metadata-count"),
   metadataBody: document.querySelector("#metadata-body"),
   metadataEmpty: document.querySelector("#metadata-empty"),
@@ -35,6 +44,7 @@ const state = {
   output: new Uint8Array(),
   json: [],
   file: null,
+  format: null,
   previewUrl: null,
   downloadUrl: null,
 };
@@ -117,6 +127,17 @@ function orientationLabel(value) {
   return labels[value] ?? "未记录";
 }
 
+function pngColorTypeLabel(value) {
+  const labels = {
+    0: "灰度（0）",
+    2: "真彩色（2）",
+    3: "索引色（3）",
+    4: "灰度 + Alpha（4）",
+    6: "真彩色 + Alpha（6）",
+  };
+  return labels[value] ?? `未知（${value}）`;
+}
+
 function riskClass(risk) {
   if (risk === "高") return "risk-high";
   if (risk === "中") return "risk-medium";
@@ -182,6 +203,7 @@ function renderMetadata(items) {
 }
 
 function renderInspection(report) {
+  state.format = report.format;
   elements.resultPanel.hidden = false;
   elements.fileName.textContent = state.file.name;
   elements.fileSize.textContent = formatBytes(state.file.size);
@@ -191,8 +213,20 @@ function renderInspection(report) {
     report.width == null || report.height == null
       ? "未找到"
       : `${report.width} × ${report.height} px`;
-  elements.factSegments.textContent = `${report.segmentCount} 段`;
+  elements.factUnitLabel.textContent = report.unitLabel ?? "结构单元";
+  elements.factSegments.textContent = `${report.unitCount ?? report.segmentCount} ${
+    report.format === "PNG" ? "块" : "段"
+  }`;
   elements.factOrientation.textContent = orientationLabel(report.orientation);
+  const isPng = report.format === "PNG";
+  elements.factBitDepthRow.hidden = !isPng;
+  elements.factColorRow.hidden = !isPng;
+  elements.factAlphaRow.hidden = !isPng;
+  elements.factAnimationRow.hidden = !isPng;
+  elements.factBitDepth.textContent = isPng ? `${report.bitDepth} bit` : "—";
+  elements.factColorType.textContent = isPng ? pngColorTypeLabel(report.colorType) : "—";
+  elements.factAlpha.textContent = isPng ? (report.hasAlpha ? "有" : "无") : "—";
+  elements.factAnimation.textContent = isPng ? (report.isAnimated ? "APNG" : "静态") : "—";
   renderMetadata(report.metadata ?? []);
   const diagnostics = report.diagnostics ?? [];
   if (diagnostics.length > 0) {
@@ -234,11 +268,18 @@ async function inspectFile(file) {
 function cleanedFileName(name) {
   const dot = name.lastIndexOf(".");
   const stem = dot > 0 ? name.slice(0, dot) : name;
-  return `${stem}.clean.jpg`;
+  return `${stem}.clean.${state.format === "PNG" ? "png" : "jpg"}`;
 }
 
 function removalLabel(name) {
   if (name === "Data after EOI") return "JPEG 尾随数据（EOI 之后）";
+  if (name === "Data after IEND") return "PNG 尾随数据（IEND 之后）";
+  if (name === "PNG text (tEXt)") return "PNG 文本（tEXt）";
+  if (name === "PNG compressed text (zTXt)") return "PNG 压缩文本（zTXt）";
+  if (name === "PNG international text (iTXt)") return "PNG 国际文本（iTXt）";
+  if (name === "PNG Exif (eXIf)") return "PNG Exif（eXIf）";
+  if (name === "PNG modification time (tIME)") return "PNG 修改时间（tIME）";
+  if (name === "PNG physical dimensions (pHYs)") return "PNG 物理尺寸（pHYs）";
   return name;
 }
 
@@ -282,7 +323,9 @@ async function sanitizeCurrentFile() {
     }
     if (state.downloadUrl) URL.revokeObjectURL(state.downloadUrl);
     state.downloadUrl = URL.createObjectURL(
-      new Blob([state.output], { type: "image/jpeg" }),
+      new Blob([state.output], {
+        type: state.format === "PNG" ? "image/png" : "image/jpeg",
+      }),
     );
     renderSanitizeResult(report);
   } catch (error) {

@@ -210,6 +210,65 @@ fn inspection_json(report : @lib.JpegInspection) -> String {
   }
   builder.write_string(",\"segmentCount\":")
   builder.write_string(report.segments().length().to_string())
+  builder.write_string(",\"unitCount\":")
+  builder.write_string(report.segments().length().to_string())
+  builder.write_string(",\"unitLabel\":\"JPEG 段数\"")
+  builder.write_string(",\"hasAlpha\":false,\"isAnimated\":false")
+  builder.write_string(",\"bitDepth\":null,\"colorType\":null")
+  builder.write_string(",\"metadata\":")
+  append_metadata_json(builder, info.metadata())
+  builder.write_string(",\"diagnostics\":")
+  append_diagnostics_json(builder, info.diagnostics())
+  builder.write_char('}')
+  builder.to_string()
+}
+
+///|
+fn png_inspection_json(report : @lib.PngInspection) -> String {
+  let info = report.info()
+  let builder = StringBuilder()
+  builder.write_string("{\"ok\":true,\"format\":")
+  json_string(builder, info.format().display_name())
+  builder.write_string(",\"fileSize\":")
+  builder.write_string(info.file_size().to_string())
+  builder.write_string(",\"width\":")
+  match info.dimensions() {
+    Some(dimensions) => builder.write_string(dimensions.width.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"height\":")
+  match info.dimensions() {
+    Some(dimensions) => builder.write_string(dimensions.height.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"orientation\":")
+  match report.orientation() {
+    Some(value) => builder.write_string(value.to_string())
+    None => builder.write_string("null")
+  }
+  builder.write_string(",\"unitCount\":")
+  builder.write_string(report.chunks().length().to_string())
+  builder.write_string(",\"unitLabel\":\"PNG 块数\"")
+  builder.write_string(",\"hasAlpha\":")
+  builder.write_string(
+    if info.has_alpha() == Some(true) {
+      "true"
+    } else {
+      "false"
+    },
+  )
+  builder.write_string(",\"isAnimated\":")
+  builder.write_string(
+    if info.is_animated() == Some(true) {
+      "true"
+    } else {
+      "false"
+    },
+  )
+  builder.write_string(",\"bitDepth\":")
+  builder.write_string(report.bit_depth().to_string())
+  builder.write_string(",\"colorType\":")
+  builder.write_string(report.color_type().to_string())
   builder.write_string(",\"metadata\":")
   append_metadata_json(builder, info.metadata())
   builder.write_string(",\"diagnostics\":")
@@ -242,6 +301,24 @@ fn jpeg_error_message(error : @lib.JpegError) -> String {
 }
 
 ///|
+fn png_error_message(error : @lib.PngError) -> String {
+  match error {
+    @lib.NotPng => "文件不是有效的 PNG"
+    @lib.UnexpectedEof(_, _, _) => "PNG 数据被截断"
+    @lib.InvalidChunkType(_) => "PNG 块类型无效"
+    @lib.InvalidChunkLength(_, _) => "PNG 块长度或图像头字段无效"
+    @lib.CrcMismatch(_, _, _) => "PNG 块 CRC 校验失败"
+    @lib.InvalidChunkOrder(_, _) => "PNG 块顺序或结构无效"
+    @lib.MissingIhdr => "PNG 缺少图像头 IHDR"
+    @lib.MissingIdat => "PNG 缺少图像数据 IDAT"
+    @lib.MissingIend => "PNG 缺少结束块 IEND"
+    @lib.UnknownCriticalChunk(name, _) =>
+      "无法安全清理未知关键块 " + name
+    @lib.ChunkLimitExceeded(_) => "PNG 块数量超过安全限制"
+  }
+}
+
+///|
 #export_name("photo_privacy_inspect")
 pub fn inspect_loaded_file() -> Int {
   guard load_input() is Some(data) else {
@@ -250,20 +327,36 @@ pub fn inspect_loaded_file() -> Int {
     )
     return 3
   }
-  if @lib.detect_format(data) != @lib.Jpeg {
-    send_json(
-      error_json("unsupported-format", "当前网页 MVP 只支持 JPEG 清理"),
-    )
-    return 2
-  }
-  match @lib.inspect_jpeg(data) {
-    Ok(report) => {
-      send_json(inspection_json(report))
-      0
-    }
-    Err(error) => {
-      send_json(error_json("invalid-jpeg", jpeg_error_message(error)))
-      1
+  match @lib.detect_format(data) {
+    @lib.Jpeg =>
+      match @lib.inspect_jpeg(data) {
+        Ok(report) => {
+          send_json(inspection_json(report))
+          0
+        }
+        Err(error) => {
+          send_json(error_json("invalid-jpeg", jpeg_error_message(error)))
+          1
+        }
+      }
+    @lib.Png =>
+      match @lib.inspect_png(data) {
+        Ok(report) => {
+          send_json(png_inspection_json(report))
+          0
+        }
+        Err(error) => {
+          send_json(error_json("invalid-png", png_error_message(error)))
+          1
+        }
+      }
+    _ => {
+      send_json(
+        error_json(
+          "unsupported-format", "当前网页支持 JPEG 和 PNG 清理",
+        ),
+      )
+      2
     }
   }
 }
@@ -277,6 +370,22 @@ pub fn sanitize_loaded_file() -> Int {
     )
     return 3
   }
+  match @lib.detect_format(data) {
+    @lib.Jpeg => sanitize_loaded_jpeg(data)
+    @lib.Png => sanitize_loaded_png(data)
+    _ => {
+      send_json(
+        error_json(
+          "unsupported-format", "当前网页支持 JPEG 和 PNG 清理",
+        ),
+      )
+      2
+    }
+  }
+}
+
+///|
+fn sanitize_loaded_jpeg(data : Bytes) -> Int {
   match @lib.sanitize_jpeg(data) {
     Err(error) => {
       send_json(error_json("invalid-jpeg", jpeg_error_message(error)))
@@ -286,6 +395,48 @@ pub fn sanitize_loaded_file() -> Int {
       send_output(result.output())
       let builder = StringBuilder()
       builder.write_string("{\"ok\":true,\"verified\":")
+      builder.write_string(if result.verified() { "true" } else { "false" })
+      builder.write_string(",\"outputSize\":")
+      builder.write_string(result.output().length().to_string())
+      builder.write_string(",\"removedBytes\":")
+      builder.write_string(result.removed_bytes().to_string())
+      builder.write_string(",\"removed\":[")
+      for index, item in result.removed() {
+        if index > 0 {
+          builder.write_char(',')
+        }
+        builder.write_string("{\"name\":")
+        json_string(builder, item.name)
+        builder.write_string(",\"offset\":")
+        builder.write_string(item.offset.to_string())
+        builder.write_string(",\"originalLength\":")
+        builder.write_string(item.original_length.to_string())
+        builder.write_string(",\"replacementLength\":")
+        builder.write_string(item.replacement_length.to_string())
+        builder.write_char('}')
+      }
+      builder.write_string("]}")
+      send_json(builder.to_string())
+      if result.verified() {
+        0
+      } else {
+        4
+      }
+    }
+  }
+}
+
+///|
+fn sanitize_loaded_png(data : Bytes) -> Int {
+  match @lib.sanitize_png(data) {
+    Err(error) => {
+      send_json(error_json("invalid-png", png_error_message(error)))
+      1
+    }
+    Ok(result) => {
+      send_output(result.output())
+      let builder = StringBuilder()
+      builder.write_string("{\"ok\":true,\"format\":\"PNG\",\"verified\":")
       builder.write_string(if result.verified() { "true" } else { "false" })
       builder.write_string(",\"outputSize\":")
       builder.write_string(result.output().length().to_string())
