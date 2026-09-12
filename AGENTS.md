@@ -24,6 +24,21 @@ You can browse and install extra skills here:
 - Try to keep deprecated blocks in file called `deprecated.mbt` in each
   directory.
 
+## Parser compatibility policy
+
+- Strictly validate structures that the format specification requires for
+  safety or correct interpretation, including signatures, bounded lengths,
+  offsets, checksums, mandatory headers, and required critical ordering.
+- Tolerantly accept bounded content that the specification permits but the
+  implementation does not yet recognize. Report it explicitly instead of
+  treating an unfamiliar extension as a malformed file.
+- Do not turn a specification recommendation or canonical writer layout into a
+  fatal parser rule unless violating it makes continued parsing unsafe.
+- Inspection may accept and report an unfamiliar structure while sanitization
+  refuses to rewrite it when its rendering role cannot be established safely.
+- Every sanitizer must document whether unknown optional data is preserved or
+  removed and must verify its output with the parser before claiming success.
+
 ## Tooling
 
 - `moon fmt` is used to format your code properly.
