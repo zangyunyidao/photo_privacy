@@ -7,13 +7,14 @@ MoonBit 实现。应用通过 WebAssembly 在浏览器本地处理文件，用�
 **在线演示：** <https://zangyunyidao.github.io/photo_privacy/>
 
 当前版本已经能够依据文件签名识别 JPEG、PNG、WebP、GIF、BMP、TIFF、
-HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG 与 PNG 已支持容器结构
+HEIF/HEIC 和 AVIF，而不是依赖可能被修改的扩展名。JPEG、PNG 与 WebP 已支持容器结构
 检查、常用 Exif/TIFF 字段解析、隐私元数据清理和清理后复检。清理过程不会解码
-或重新压缩像素数据；PNG 透明度、色彩信息及 APNG 动画结构会被保留。
+或重新压缩像素数据；透明度、色彩信息及动画结构会被保留。
 
 JPEG 浏览器闭环已经在真实手机照片上完成验收；PNG 已接入同一 WebAssembly
 页面，并通过核心测试、Wasm 桥接测试以及普通、透明和动画 PNG 的本地浏览器
-人工验收，现已合并并部署到在线演示。下一阶段在 `feat/webp` 分支实现 WebP。
+人工验收，现已合并并部署到在线演示。WebP 已在 `feat/webp` 完成功能实现与
+自动测试，等待浏览器人工验收、推送和部署。
 
 ## 本地运行
 
@@ -25,7 +26,7 @@ moon test
 
 ## 浏览器 MVP
 
-当前网页 MVP 使用 MoonBit 编译出的 WebAssembly 在浏览器本地完成 JPEG/PNG 检查与
+当前网页 MVP 使用 MoonBit 编译出的 WebAssembly 在浏览器本地完成 JPEG/PNG/WebP 检查与
 清理。浏览器只负责文件选择、预览和下载，不会把图像发送到服务器。
 
 也可以直接使用[在线演示](https://zangyunyidao.github.io/photo_privacy/)。
@@ -43,7 +44,8 @@ moon test
 即可停止服务器。
 
 这个任务只是开发入口，不会取代 MoonBit 代码接口。其他 MoonBit 包仍可直接调用
-`detect_format`、`inspect_jpeg`、`sanitize_jpeg`、`inspect_png` 和 `sanitize_png`。
+`detect_format`、`inspect_jpeg`、`sanitize_jpeg`、`inspect_png`、`sanitize_png`、
+`inspect_webp` 和 `sanitize_webp`。
 
 在 Windows PowerShell 中构建：
 
@@ -55,12 +57,12 @@ python -m http.server 8000 --directory web\dist
 然后访问 <http://127.0.0.1:8000/>。页面目前支持：
 
 - 拖放或手动选择本地图像；
-- 显示 JPEG/PNG 尺寸、结构、方向、透明度、动画状态、元数据及隐私风险；
+- 显示 JPEG/PNG/WebP 尺寸、结构、编码、方向、透明度、动画状态、元数据及隐私风险；
 - 清除 Exif、文本、时间、物理尺寸和尾随数据等非显示必需信息；
-- 保留 JPEG 扫描数据、PNG IDAT、显示方向、透明度、色彩及 APNG 结构；
+- 保留 JPEG 扫描数据、PNG IDAT、WebP 位流、显示方向、透明度、色彩及动画结构；
 - 对清理结果进行二次解析，并下载干净副本。
 
-核心能够依据文件签名识别 WebP 和其他列出的格式；网页会明确提示尚未支持的
+核心能够依据文件签名识别其他列出的格式；网页会明确提示尚未支持的
 格式，不会生成可能损坏的输出。
 
 构建后可以额外运行 Wasm 桥接测试：

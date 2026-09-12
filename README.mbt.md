@@ -26,7 +26,7 @@ MoonBit 实现。应用通过 WebAssembly 在浏览器本地处理文件，用�
 - HEIF/HEIC 系列 ISO-BMFF 品牌
 - AVIF
 
-JPEG 与 PNG 核心现已支持：
+JPEG、PNG 与 WebP 核心现已支持：
 
 - 扫描并报告 JPEG 标记段与图像尺寸；
 - 解析大端或小端 Exif/TIFF 中的常用设备、时间、方向和 GPS 字段；
@@ -37,6 +37,9 @@ JPEG 与 PNG 核心现已支持：
 - 校验 PNG 块长度、顺序与 CRC，解析文本、时间、物理尺寸和 eXIf；
 - 清理 PNG 隐私块与未知辅助块，同时保留透明度、色彩和 APNG 动画结构；
 - 对未知关键块拒绝清理，并对清理结果进行二次解析验证。
+- 校验 WebP RIFF 长度、FourCC 块和奇数长度填充；
+- 识别有损、无损、透明和动画 WebP，并解析 EXIF/XMP/ICC；
+- 清理 WebP 隐私块、未知块和尾随数据，同时修正 VP8X 标志与 RIFF 长度。
 
 在项目根目录运行演示与测试：
 
@@ -53,12 +56,13 @@ moon test
 python -m http.server 8000 --directory web\dist
 ```
 
-打开 `http://127.0.0.1:8000/` 后，可以拖放或选择 JPEG/PNG，查看 MoonBit/Wasm
+打开 `http://127.0.0.1:8000/` 后，可以拖放或选择 JPEG/PNG/WebP，查看 MoonBit/Wasm
 解析出的元数据及风险，并生成经过二次检查的干净副本。
 
 线上 GitHub Pages 已部署；真实手机 JPEG 已完成检查、清理、下载、正常显示及
 重新上传复检。PNG 已完成代码、自动测试以及普通、透明和动画 PNG 的本地浏览器
-人工验收并合并部署；WebP 正在 `feat/webp` 分支开发。
+人工验收并合并部署。WebP 已在 `feat/webp` 完成功能和自动测试，等待浏览器
+人工验收、推送和部署。
 
 ## 后续交付内容
 

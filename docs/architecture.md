@@ -19,12 +19,12 @@ Browser File / CLI Bytes
 - `photo_privacy.mbt`：文件签名与 ISO-BMFF 品牌识别。
 - `binary_reader.mbt`：带边界检查和字节序支持的二进制读取器。
 - `image_model.mbt`：统一图像信息、元数据、风险和诊断模型。
-- `exif.mbt`：JPEG APP1 与 PNG eXIf 共用的 TIFF/IFD 解析和最小方向信息生成。
+- `exif.mbt`：JPEG APP1、PNG eXIf 与 WebP EXIF 共用的 TIFF/IFD 解析和最小方向信息生成。
 - `jpeg.mbt`：JPEG 段解析、隐私清理和清理后复检。
 - `png.mbt`：PNG 块与 CRC 校验、隐私元数据解析、允许列表清理和清理后复检。
 - `web/wasm`：面向浏览器宿主的整数 ABI 与 Wasm 导出。
 - `web/site`：静态网页、预览、报告和下载适配器。
-- `webp.mbt`：后续 Issue #4 新增的格式实现。
+- `webp.mbt`：WebP RIFF/嵌套动画块解析、隐私清理、标志修正和清理后复检。
 
 HTML、CSS 与少量 JavaScript 适配器负责浏览器文件 API、预览、DOM 渲染和下载。
 浏览器通过整数 ABI 将图像字节分块传给 MoonBit 编译出的 WebAssembly；解析、
