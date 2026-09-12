@@ -438,3 +438,36 @@ fn parse_exif_metadata(
   }
   root.orientation
 }
+
+///|
+/// Build the smallest TIFF payload that preserves only display orientation.
+fn minimal_orientation_tiff(orientation : Int) -> Bytes {
+  Bytes::from_array([
+    b'M',
+    b'M',
+    b'\x00',
+    b'\x2A',
+    b'\x00',
+    b'\x00',
+    b'\x00',
+    b'\x08',
+    b'\x00',
+    b'\x01',
+    b'\x01',
+    b'\x12',
+    b'\x00',
+    b'\x03',
+    b'\x00',
+    b'\x00',
+    b'\x00',
+    b'\x01',
+    ((orientation >> 8) & 0xFF).to_byte(),
+    (orientation & 0xFF).to_byte(),
+    b'\x00',
+    b'\x00',
+    b'\x00',
+    b'\x00',
+    b'\x00',
+    b'\x00',
+  ])
+}
