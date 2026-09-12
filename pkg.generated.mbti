@@ -8,11 +8,24 @@ import {
 // Values
 pub fn detect_format(Bytes) -> ImageFormat
 
+pub fn inspect_jpeg(Bytes) -> Result[JpegInspection, JpegError]
+
+pub fn sanitize_jpeg(Bytes) -> Result[JpegSanitizeResult, JpegError]
+
 // Errors
 pub(all) suberror BinaryReadError {
   InvalidPosition(Int, Int)
   InvalidLength(Int)
   UnexpectedEnd(Int, Int, Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) suberror JpegError {
+  NotJpeg
+  UnexpectedEof(Int, Int, Int)
+  InvalidMarker(Int, Int)
+  InvalidSegmentLength(Int, Int)
+  MissingEoi
+  SegmentLimitExceeded(Int)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -68,6 +81,46 @@ pub fn ImageInfo::has_alpha(Self) -> Bool?
 pub fn ImageInfo::is_animated(Self) -> Bool?
 pub fn ImageInfo::metadata(Self) -> Array[MetadataItem]
 pub fn ImageInfo::new(ImageFormat, Int, ImageDimensions?, Bool?, Bool?, Array[MetadataItem], Array[ParseDiagnostic]) -> Self
+
+pub struct JpegInspection {
+  // private fields
+}
+pub fn JpegInspection::eoi_end(Self) -> Int
+pub fn JpegInspection::info(Self) -> ImageInfo
+pub fn JpegInspection::orientation(Self) -> Int?
+pub fn JpegInspection::segments(Self) -> Array[JpegSegment]
+
+pub(all) struct JpegRemoval {
+  name : String
+  offset : Int
+  original_length : Int
+  replacement_length : Int
+} derive(Eq, @debug.Debug)
+
+pub struct JpegSanitizeResult {
+  // private fields
+}
+pub fn JpegSanitizeResult::output(Self) -> Bytes
+pub fn JpegSanitizeResult::removed(Self) -> Array[JpegRemoval]
+pub fn JpegSanitizeResult::removed_bytes(Self) -> Int
+pub fn JpegSanitizeResult::verified(Self) -> Bool
+
+pub(all) struct JpegSegment {
+  marker : Int
+  name : String
+  offset : Int
+  payload_offset : Int
+  payload_length : Int
+  end_offset : Int
+  role : JpegSegmentRole
+} derive(Eq, @debug.Debug)
+
+pub(all) enum JpegSegmentRole {
+  Structure
+  ImageData
+  Metadata
+  UnknownRole
+} derive(Eq, @debug.Debug)
 
 pub(all) enum MetadataCategory {
   Location

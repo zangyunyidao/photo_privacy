@@ -32,6 +32,8 @@
 
 **建议标签：** `JPEG`、`Exif`、`核心功能`、`优先级：高`
 
+**状态：** 已完成（分支 `feat/jpeg-exif`，等待合并）
+
 ### 工作内容
 
 - 扫描 SOI、APPn、COM、SOF、SOS 和 EOI 等 JPEG 标记。
